@@ -15,6 +15,7 @@ This repository is for documentation and reproducible notes about running Dolby 
 - Runtime logs (`.log`)
 - Extracted engine folders
 
-Primary guide:
+Guides:
 
-- `DEE_Encoding_on_macOS_with_gcenx_wine.md`
+- Chinese: `DEE_Encoding_on_macOS_with_gcenx_wine.md`
+- English: `DEE_Encoding_on_macOS_with_gcenx_wine.en.md`
