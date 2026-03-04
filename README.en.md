@@ -5,6 +5,7 @@ This repository documents and reproduces a practical setup for running Dolby Enc
 ## Read Me in Chinese
 
 - 中文 README: [README.md](./README.md)
+- Disclaimer: [DISCLAIMER.md](./DISCLAIMER.md)
 
 ## Documentation
 
@@ -23,3 +24,10 @@ This repository documents and reproduces a practical setup for running Dolby Enc
 - Media test assets (`.wav`, `.ec3`)
 - Runtime logs (`.log`)
 - Extracted engine folders
+
+## Before making this repository public
+
+1. Verify `git ls-files` includes docs/text only (no binaries, licenses, or media assets).
+2. Verify commit history contains no accidental sensitive data (tokens, private keys, local absolute paths, etc.).
+3. Review and accept the boundaries in [DISCLAIMER.md](./DISCLAIMER.md).
+4. Add an appropriate open-source license for your intended sharing scope.
