@@ -6,6 +6,7 @@ This repository documents and reproduces a practical setup for running Dolby Enc
 
 - 中文 README: [README.md](./README.md)
 - Disclaimer: [DISCLAIMER.md](./DISCLAIMER.md)
+- Licenses: [LICENSE](./LICENSE), [LICENSE-docs](./LICENSE-docs)
 
 ## Documentation
 
@@ -30,4 +31,9 @@ This repository documents and reproduces a practical setup for running Dolby Enc
 1. Verify `git ls-files` includes docs/text only (no binaries, licenses, or media assets).
 2. Verify commit history contains no accidental sensitive data (tokens, private keys, local absolute paths, etc.).
 3. Review and accept the boundaries in [DISCLAIMER.md](./DISCLAIMER.md).
-4. Add an appropriate open-source license for your intended sharing scope.
+4. Confirm license split is aligned with your sharing intent (code/scripts vs docs).
+
+## Open-Source License Model
+
+1. Code and scripts: `MIT` (see [LICENSE](./LICENSE))
+2. Documentation: `CC BY 4.0` (see [LICENSE-docs](./LICENSE-docs))

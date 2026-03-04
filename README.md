@@ -4,6 +4,7 @@
 
 English README: [README.en.md](./README.en.md)
 免责声明 / Disclaimer: [DISCLAIMER.md](./DISCLAIMER.md)
+许可证 / Licenses: [LICENSE](./LICENSE), [LICENSE-docs](./LICENSE-docs)
 
 ## 文档入口
 
@@ -28,4 +29,9 @@ English README: [README.en.md](./README.en.md)
 1. `git ls-files` 仅包含文档与说明文件（不含二进制/许可证/媒体）。
 2. 提交历史中没有误提交敏感信息（token、私钥、本地绝对路径等）。
 3. 已阅读并接受 [DISCLAIMER.md](./DISCLAIMER.md) 的边界说明。
-4. 补充合适的开源许可证（如仅分享文档，可选择文档许可证）。
+4. 许可证分层是否符合预期（代码/脚本 vs 文档）。
+
+## 开源许可证说明
+
+1. 代码与脚本：`MIT`（见 [LICENSE](./LICENSE)）
+2. 文档内容：`CC BY 4.0`（见 [LICENSE-docs](./LICENSE-docs)）
