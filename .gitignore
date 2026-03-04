@@ -1,0 +1,22 @@
+# macOS
+.DS_Store
+
+# Dolby engine binaries / packages / licenses
+*.zip
+*.exe
+*.dll
+*.lic
+
+# Media artifacts
+*.wav
+*.ec3
+
+# Logs and temp outputs
+*.log
+tmp_dee/
+
+# Local extracted tool bundle
+dolby_encoding_engine/
+
+# Keep docs and text assets only by default in this notes repo
+# (add exceptions as needed later)
