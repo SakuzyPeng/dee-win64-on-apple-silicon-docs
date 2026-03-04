@@ -2,6 +2,8 @@
 
 本仓库用于记录并复现实验：在 Apple Silicon macOS 上通过 `gcenx/wine` 运行 Dolby Encoding Engine（Windows x64）。
 
+English README: [README.en.md](./README.en.md)
+
 ## 文档入口
 
 - 中文（主文档）：[DEE_Encoding_on_macOS_with_gcenx_wine.md](./DEE_Encoding_on_macOS_with_gcenx_wine.md)
