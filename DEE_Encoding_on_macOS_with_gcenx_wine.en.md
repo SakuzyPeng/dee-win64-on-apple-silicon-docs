@@ -156,7 +156,7 @@ Default wrapper behavior:
 
 ## 9. Recommendations
 
-1. Use `gcenx/wine` as the primary production route.
+1. For production, keep `gcenx/wine` as a fixed runtime to maintain environment consistency.
 2. Keep a dedicated prefix such as `~/.wine-dee-gcenx` for DEE only.
 3. Store templates and logs in a reproducible structure for team handoff.
 

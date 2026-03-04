@@ -156,7 +156,7 @@ dee --xml /path/to/job.xml --progress --stdout
 
 ## 9. 建议
 
-1. 生产任务优先走 `gcenx/wine`，避免再扩展 Whisky 方案。
+1. 生产任务建议固定使用 `gcenx/wine`，保持运行环境一致性。
 2. 保留独立前缀 `~/.wine-dee-gcenx`，只用于 DEE。
 3. 将模板与日志固化到项目中，便于团队复现。
 
