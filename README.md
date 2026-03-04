@@ -24,13 +24,6 @@ English README: [README.en.md](./README.en.md)
 - 运行日志（`.log`）
 - 解压后的引擎目录
 
-## 若公开仓库，建议再确认
-
-1. `git ls-files` 仅包含文档与说明文件（不含二进制/许可证/媒体）。
-2. 提交历史中没有误提交敏感信息（token、私钥、本地绝对路径等）。
-3. 已阅读并接受 [DISCLAIMER.md](./DISCLAIMER.md) 的边界说明。
-4. 许可证分层是否符合预期（代码/脚本 vs 文档）。
-
 ## 开源许可证说明
 
 1. 代码与脚本：`MIT`（见 [LICENSE](./LICENSE)）
