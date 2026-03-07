@@ -14,6 +14,7 @@
 # Logs and temp outputs
 *.log
 tmp_dee/
+tmp_bench/
 .buildx-cache/
 .buildx-cache-new/
 tmp_fex_rootfs/
