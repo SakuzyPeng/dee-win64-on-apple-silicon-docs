@@ -11,9 +11,7 @@ English README: [README.en.md](./README.en.md)
 ## 文档入口
 
 - 中文（主文档）：[DEE_Encoding_on_macOS_with_gcenx_wine.md](./DEE_Encoding_on_macOS_with_gcenx_wine.md)
-- English: [DEE_Encoding_on_macOS_with_gcenx_wine.en.md](./DEE_Encoding_on_macOS_with_gcenx_wine.en.md)
 - FEX 容器指南（中文）：[DEE_Docker_FEX_Experiment.md](./DEE_Docker_FEX_Experiment.md)
-- FEX Container Guide (English): [DEE_Docker_FEX_Experiment.en.md](./DEE_Docker_FEX_Experiment.en.md)
 - 容器化方案（Docker + 自编译精简 Wine）：[DEE_Docker_Minimal_Wine.md](./DEE_Docker_Minimal_Wine.md)
 
 ## 仓库包含内容
