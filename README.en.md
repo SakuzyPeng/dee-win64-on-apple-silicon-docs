@@ -12,6 +12,7 @@ This repository documents and reproduces a practical setup for running Dolby Enc
 
 - Chinese (primary): [DEE_Encoding_on_macOS_with_gcenx_wine.md](./DEE_Encoding_on_macOS_with_gcenx_wine.md)
 - English: [DEE_Encoding_on_macOS_with_gcenx_wine.en.md](./DEE_Encoding_on_macOS_with_gcenx_wine.en.md)
+- Docker containerized approach (self-compiled minimal Wine): [DEE_Docker_Minimal_Wine.en.md](./DEE_Docker_Minimal_Wine.en.md)
 
 ## Included
 
