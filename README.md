@@ -25,7 +25,20 @@ English README: [README.en.md](./README.en.md)
   ```
 - 详细指南：[DEE_Docker_FEX_Experiment.md](./DEE_Docker_FEX_Experiment.md)
 
-### 2) Rosetta 2 路线（非 FEX，兼容方案）
+### 2) Box64 路线（并行第三路线，候选发布）
+
+- 镜像：`ghcr.io/sakuzypeng/dee-box64-lab:latest`
+- 拉取：
+  ```bash
+  docker pull ghcr.io/sakuzypeng/dee-box64-lab:latest
+  ```
+- 最短自检：
+  ```bash
+  IMAGE_TAG=ghcr.io/sakuzypeng/dee-box64-lab:latest ./scripts/run_dee_with_box64.sh --help
+  ```
+- 详细指南：[DEE_Docker_Box64_Experiment.md](./DEE_Docker_Box64_Experiment.md)
+
+### 3) Rosetta 2 路线（非 FEX，兼容方案）
 
 - 镜像：`ghcr.io/sakuzypeng/dee-wine-minimal:legacy-rosetta2-latest`
 - 拉取：
@@ -45,6 +58,7 @@ English README: [README.en.md](./README.en.md)
 
 - 中文（主文档）：[DEE_Encoding_on_macOS_with_gcenx_wine.md](./DEE_Encoding_on_macOS_with_gcenx_wine.md)
 - FEX 容器指南（中文）：[DEE_Docker_FEX_Experiment.md](./DEE_Docker_FEX_Experiment.md)
+- Box64 容器指南（中文）：[DEE_Docker_Box64_Experiment.md](./DEE_Docker_Box64_Experiment.md)
 - 容器化方案（Docker + 自编译精简 Wine，非 FEX，依赖 Rosetta 2）：[DEE_Docker_Minimal_Wine.md](./DEE_Docker_Minimal_Wine.md)
 
 ## 仓库包含内容

@@ -15,6 +15,9 @@
 *.log
 tmp_dee/
 tmp_bench/
+tmp_box64_state/
+tmp_box64_state_bench/
+tmp_box64_acceptance/
 .buildx-cache/
 .buildx-cache-new/
 tmp_fex_rootfs/

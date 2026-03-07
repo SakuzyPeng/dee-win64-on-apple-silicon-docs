@@ -27,7 +27,20 @@ Note: the `FEX` container track is used to reduce dependency on `Rosetta 2` and 
   ```
 - Guide: [DEE_Docker_FEX_Experiment.en.md](./DEE_Docker_FEX_Experiment.en.md)
 
-### 2) Rosetta 2 track (non-FEX compatibility path)
+### 2) Box64 track (parallel third path, release candidate)
+
+- Image: `ghcr.io/sakuzypeng/dee-box64-lab:latest`
+- Pull:
+  ```bash
+  docker pull ghcr.io/sakuzypeng/dee-box64-lab:latest
+  ```
+- Quick smoke test:
+  ```bash
+  IMAGE_TAG=ghcr.io/sakuzypeng/dee-box64-lab:latest ./scripts/run_dee_with_box64.sh --help
+  ```
+- Guide: [DEE_Docker_Box64_Experiment.en.md](./DEE_Docker_Box64_Experiment.en.md)
+
+### 3) Rosetta 2 track (non-FEX compatibility path)
 
 - Image: `ghcr.io/sakuzypeng/dee-wine-minimal:legacy-rosetta2-latest`
 - Pull:
@@ -47,6 +60,7 @@ Note: the `FEX` container track is used to reduce dependency on `Rosetta 2` and 
 
 - English: [DEE_Encoding_on_macOS_with_gcenx_wine.en.md](./DEE_Encoding_on_macOS_with_gcenx_wine.en.md)
 - FEX container guide (English): [DEE_Docker_FEX_Experiment.en.md](./DEE_Docker_FEX_Experiment.en.md)
+- Box64 container guide (English): [DEE_Docker_Box64_Experiment.en.md](./DEE_Docker_Box64_Experiment.en.md)
 - Docker containerized approach (self-compiled minimal Wine, non-FEX, requires Rosetta 2): [DEE_Docker_Minimal_Wine.en.md](./DEE_Docker_Minimal_Wine.en.md)
 
 ## Included
