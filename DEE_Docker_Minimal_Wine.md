@@ -4,6 +4,8 @@
 
 在 Docker 容器内运行 `dolby_encoding_engine`（Windows x64），通过自编译精简版 Wine 9.0 减小镜像体积，并完成实际编码任务（`ADM WAV -> EC3`）。
 
+该方案是非 FEX 路线，运行依赖 `linux/amd64 + Rosetta 2` 转译。
+
 ---
 
 ## 2. 最终结论

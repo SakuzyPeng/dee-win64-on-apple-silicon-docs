@@ -4,6 +4,8 @@
 
 Run `dolby_encoding_engine` (Windows x64) inside a Docker container using a self-compiled, stripped-down Wine 9.0, reducing image size while completing a real encoding workflow (`ADM WAV -> EC3`).
 
+This is a non-FEX track and depends on `linux/amd64 + Rosetta 2` translation.
+
 ---
 
 ## 2. Final Result

@@ -14,7 +14,7 @@ Note: the `FEX` container track is used to reduce dependency on `Rosetta 2` and 
 
 - English: [DEE_Encoding_on_macOS_with_gcenx_wine.en.md](./DEE_Encoding_on_macOS_with_gcenx_wine.en.md)
 - FEX container guide (English): [DEE_Docker_FEX_Experiment.en.md](./DEE_Docker_FEX_Experiment.en.md)
-- Docker containerized approach (self-compiled minimal Wine): [DEE_Docker_Minimal_Wine.en.md](./DEE_Docker_Minimal_Wine.en.md)
+- Docker containerized approach (self-compiled minimal Wine, non-FEX, requires Rosetta 2): [DEE_Docker_Minimal_Wine.en.md](./DEE_Docker_Minimal_Wine.en.md)
 
 ## Included
 
