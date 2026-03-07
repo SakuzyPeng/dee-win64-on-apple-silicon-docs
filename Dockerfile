@@ -12,17 +12,19 @@ RUN apt-get update && \
         wget \
         ca-certificates && \
     rm -rf /var/lib/apt/lists/* && \
-    ln -sf /usr/lib/wine/wine64 /usr/bin/wine64 && \
-    ln -sf /usr/lib/wine/wineserver64 /usr/bin/wineserver
+    which wine64 >/dev/null || ln -sf /usr/lib/wine/wine64 /usr/bin/wine64 && \
+    which wineserver >/dev/null || ln -sf /usr/lib/wine/wineserver64 /usr/bin/wineserver
 
 # Initialize Wine prefix (64-bit only)
 RUN wine64 wineboot --init 2>/dev/null; wineserver -w; true
 
 # Install VC++ 2022 x64 redistributable (VCRUNTIME140 / MSVCP140 / UCRT)
 RUN wget -q "https://aka.ms/vs/17/release/vc_redist.x64.exe" -O /tmp/vcredist.exe && \
+    [ -f /tmp/vcredist.exe ] && \
     wine64 /tmp/vcredist.exe /install /quiet /norestart 2>/dev/null && \
     wineserver -w && \
-    rm /tmp/vcredist.exe
+    rm /tmp/vcredist.exe && \
+    echo "VC++ redist installed" >/tmp/vcredist_ok
 
 # DEE binaries are mounted at runtime via -v, not baked into the image
 WORKDIR /dee

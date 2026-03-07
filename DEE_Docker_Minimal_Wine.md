@@ -211,6 +211,9 @@ docker run --rm --platform linux/amd64 \
 
 ## 10. 注意事项
 
-1. **磁盘空间**：Mac 本地加载 483 MB 镜像约需 500 MB 可用空间；远端构建需 3 GB。
+1. **磁盘空间**：
+   - 镜像解压后大小：442 MB（`docker images` 显示值）
+   - 本地加载约需 500 MB 可用空间
+   - 远端构建需 3 GB（中间产物）
 2. **平台限制**：`linux/amd64` 镜像在 Apple Silicon 上经 Rosetta 模拟运行，有额外性能开销。
 3. **个人使用推荐**：单机场景下，`~/bin/dee` 脚本方案（直接调用 `gcenx/wine`）开销更低，无需容器。容器方案适合团队共享或 CI/CD 环境。

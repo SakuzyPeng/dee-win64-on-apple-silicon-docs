@@ -18,6 +18,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 
 WORKDIR /build
 RUN wget -q https://dl.winehq.org/wine/source/9.0/wine-9.0.tar.xz && \
+    echo "7cfd090a5395f5b76d95bb5defac8a312c8de4c070c1163b8b58da38330ca6ee  wine-9.0.tar.xz" | sha256sum -c - && \
     tar xf wine-9.0.tar.xz && rm wine-9.0.tar.xz
 
 WORKDIR /build/wine-9.0

@@ -211,6 +211,9 @@ docker run --rm --platform linux/amd64 \
 
 ## 10. Notes
 
-1. **Disk space:** Loading the 483 MB image locally requires approximately 500 MB of free space. The remote build requires ~3 GB.
+1. **Disk space:**
+   - Image size (uncompressed): 442 MB (as shown by `docker images`)
+   - Loading locally requires ~500 MB of free space
+   - Remote build requires ~3 GB (for intermediate artifacts)
 2. **Platform emulation:** The `linux/amd64` image runs on Apple Silicon via Rosetta, which adds some performance overhead.
 3. **Single-machine recommendation:** For personal use on a Mac where `gcenx/wine` is already installed, the `~/bin/dee` wrapper script is lighter with no container overhead. The Docker approach is suited for team environments or CI/CD pipelines.
