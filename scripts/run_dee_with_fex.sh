@@ -63,6 +63,7 @@ echo "Running DEE under FEX rootfs: $FEX_ROOTFS"
 docker run --rm --platform linux/arm64 \
   -v "$ROOTFS_BASE:/root/.fex-emu" \
   -v "$ROOT_DIR:/workspace" \
+  -v "$DEE_DIR:/workspace/dolby_encoding_engine:ro" \
   "$IMAGE_TAG" bash -lc "
     set -euo pipefail
     export FEX_ROOTFS=/root/.fex-emu/RootFS/$ROOTFS_NAME

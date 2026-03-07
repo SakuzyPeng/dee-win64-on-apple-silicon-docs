@@ -26,6 +26,8 @@
 - `scripts/prune_fex_conservative.sh`
 - `scripts/prune_fex_medium.sh`
 - `scripts/prune_fex_aggressive.sh`
+- `scripts/build_fex_release_bundle.sh`
+- `scripts/unpack_fex_release_bundle.sh`
 
 ## 一次性准备
 
@@ -79,6 +81,49 @@
   --log-file y:/testADM_fex_atmos.log \
   --stdout \
   --verbose info
+```
+
+## 分发打包（release）
+
+### 1) 构建分发包（默认不含 DEE 引擎）
+
+```bash
+./scripts/build_fex_release_bundle.sh --tag local_test
+```
+
+输出目录：
+
+- `release/dee-fex-runtime-local_test/`
+  - `dee-fex-runtime-local_test.tar.zst`
+  - `dee-fex-runtime-local_test.sha256`
+  - `dee-fex-runtime-local_test.manifest.txt`
+
+可选：包含本地 `dolby_encoding_engine`（仅内部分发场景建议）：
+
+```bash
+./scripts/build_fex_release_bundle.sh --include-engine --tag with_engine
+```
+
+### 2) 解包与校验
+
+```bash
+./scripts/unpack_fex_release_bundle.sh \
+  --archive release/dee-fex-runtime-local_test/dee-fex-runtime-local_test.tar.zst \
+  --sha256  release/dee-fex-runtime-local_test/dee-fex-runtime-local_test.sha256 \
+  --dest /tmp/dee-fex-runtime-test
+```
+
+解包后目录为 `/tmp/dee-fex-runtime-test/runtime`，其中已包含：
+
+1. `scripts/run_dee_with_fex.sh`
+2. `scripts/run_dee_with_fex_persistent.sh`
+3. `tmp_fex_rootfs/RootFS/Ubuntu_24_04`
+
+如果分发包未包含 `dolby_encoding_engine`，运行时指定本机 DEE 目录：
+
+```bash
+DEE_DIR=/abs/path/to/dolby_encoding_engine \
+  bash /tmp/dee-fex-runtime-test/runtime/scripts/run_dee_with_fex.sh --help
 ```
 
 ## 本次验证结果

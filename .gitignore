@@ -18,6 +18,8 @@ tmp_bench/
 .buildx-cache/
 .buildx-cache-new/
 tmp_fex_rootfs/
+tmp_release_stage/
+release/
 
 # Local extracted tool bundle
 dolby_encoding_engine/

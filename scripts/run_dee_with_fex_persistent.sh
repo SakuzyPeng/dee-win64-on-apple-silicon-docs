@@ -80,6 +80,7 @@ start_container() {
     --name "$CONTAINER_NAME" \
     -v "$ROOTFS_BASE:/root/.fex-emu" \
     -v "$ROOT_DIR:/workspace" \
+    -v "$DEE_DIR:/workspace/dolby_encoding_engine:ro" \
     "$IMAGE_TAG" \
     bash -lc 'trap "exit 0" TERM INT; while :; do sleep 3600; done' >/dev/null
 
