@@ -19,6 +19,9 @@
 - `scripts/install_wine_in_fex_rootfs_chroot.sh`
 - `scripts/run_fex_lab_probe.sh`
 - `scripts/run_dee_with_fex.sh`
+- `scripts/prune_fex_rootfs.sh`
+- `scripts/prune_fex_wine32.sh`
+- `scripts/prune_fex_i386_runtime.sh`
 
 ## 一次性准备
 
@@ -143,3 +146,48 @@ docker run --rm --platform linux/arm64 dee-fex-lab:local \
 
 1. 先做标准化性能基线脚本（冷启动、热启动、真实编码）。
 2. 再按基线做精简（RootFS 与 Wine 组件），每步回归功能与耗时。
+
+## 已验证裁剪记录（2026-03-07）
+
+### 1) wine32 组件裁剪（已验证）
+
+```bash
+./scripts/prune_fex_wine32.sh --apply
+```
+
+结果：
+
+1. RootFS 约回收 `559688 KB`。
+2. `run_dee_with_fex*.sh` 默认已切到 `WINE_BIN=/usr/lib/wine/wine64`。
+3. `--help`、`--print-stages`、`ADM -> EC3` 编码均通过。
+
+### 2) i386 Linux 运行库裁剪（已验证）
+
+```bash
+./scripts/prune_fex_i386_runtime.sh --apply
+```
+
+结果：
+
+1. RootFS 从 `2675196 KB` 降至 `2101276 KB`，约回收 `573920 KB`。
+2. `--help`、`--print-stages`、`ADM -> EC3` 编码均通过。
+3. 可回滚：
+
+```bash
+./scripts/prune_fex_i386_runtime.sh --rollback
+```
+
+### 3) 裁剪后 FEX 基线（RUNS=3）
+
+运行命令：
+
+```bash
+RUNS=3 MODE=fex WINE_BIN=/usr/lib/wine/wine64 ./scripts/benchmark_fex_native_baseline.sh
+```
+
+Run ID: `20260307_201544`
+
+1. `help_cold`: `12.903s`
+2. `help_warm`: `1.993s`
+3. `encode_adm_to_ec3`: `17.050s`
+4. `mean_dee_job_s`: `10.000s`
