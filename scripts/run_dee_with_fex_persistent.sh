@@ -10,7 +10,7 @@ FEX_ROOTFS="${FEX_ROOTFS:-$ROOTFS_BASE/RootFS/Ubuntu_24_04}"
 DEE_DIR="${DEE_DIR:-$ROOT_DIR/dolby_encoding_engine}"
 WINEPREFIX="${WINEPREFIX:-/root/.fex-emu/WinePrefixes/dee}"
 WINEBOOT_TIMEOUT="${WINEBOOT_TIMEOUT:-120}"
-WINE_BIN="${WINE_BIN:-wine}"
+WINE_BIN="${WINE_BIN:-/usr/lib/wine/wine64}"
 DEE_WIN_EXE="${DEE_WIN_EXE:-y:/dolby_encoding_engine/dee.exe}"
 
 require_prereqs() {
@@ -30,8 +30,25 @@ require_prereqs() {
     exit 1
   fi
 
-  if [[ ! -x "$FEX_ROOTFS/usr/lib/wine/wine" ]]; then
-    echo "Wine binary not found in rootfs: $FEX_ROOTFS/usr/lib/wine/wine" >&2
+  check_wine_bin_path=""
+  case "$WINE_BIN" in
+    /usr/lib/wine/wine|wine)
+      if [[ -x "$FEX_ROOTFS/usr/lib/wine/wine" ]]; then
+        check_wine_bin_path="/usr/lib/wine/wine"
+      elif [[ -x "$FEX_ROOTFS/usr/lib/wine/wine64" ]]; then
+        check_wine_bin_path="/usr/lib/wine/wine64"
+      fi
+      ;;
+    /usr/lib/wine/wine64|wine64)
+      check_wine_bin_path="/usr/lib/wine/wine64"
+      ;;
+    /*)
+      check_wine_bin_path="$WINE_BIN"
+      ;;
+  esac
+
+  if [[ -n "$check_wine_bin_path" && ! -x "$FEX_ROOTFS$check_wine_bin_path" ]]; then
+    echo "Wine binary not found in rootfs: $FEX_ROOTFS$check_wine_bin_path" >&2
     echo "Run scripts/install_wine_in_fex_rootfs_chroot.sh first." >&2
     exit 1
   fi
