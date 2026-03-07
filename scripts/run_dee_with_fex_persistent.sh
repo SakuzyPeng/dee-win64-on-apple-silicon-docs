@@ -130,7 +130,7 @@ run_in_container() {
     ln -sfn /workspace \"\$WINEPREFIX/dosdevices/y:\"
 
     if [[ ! -f \"\$WINEPREFIX/.dee_fex_ready\" ]]; then
-      timeout '$WINEBOOT_TIMEOUT' FEXBash -c \"export WINEPREFIX='\$WINEPREFIX'; wineboot -u\" >/dev/null 2>&1 || true
+      timeout '$WINEBOOT_TIMEOUT' FEXBash -c \"export WINEPREFIX='\$WINEPREFIX'; /usr/lib/wine/wine64 wineboot.exe -u\" >/dev/null 2>&1 || true
       touch \"\$WINEPREFIX/.dee_fex_ready\"
     fi
 

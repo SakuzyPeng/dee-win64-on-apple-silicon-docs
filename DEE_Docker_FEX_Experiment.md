@@ -22,6 +22,7 @@
 - `scripts/prune_fex_rootfs.sh`
 - `scripts/prune_fex_wine32.sh`
 - `scripts/prune_fex_i386_runtime.sh`
+- `scripts/prune_fex_wine64_windows.sh`
 
 ## 一次性准备
 
@@ -191,3 +192,32 @@ Run ID: `20260307_201544`
 2. `help_warm`: `1.993s`
 3. `encode_adm_to_ec3`: `17.050s`
 4. `mean_dee_job_s`: `10.000s`
+
+### 4) wine64 Windows 模块白名单裁剪（实验通过，有冷启动代价）
+
+```bash
+./scripts/prune_fex_wine64_windows.sh --collect
+./scripts/prune_fex_wine64_windows.sh --apply
+```
+
+结果：
+
+1. `x86_64-windows` 目录从 `648520 KB` 降至 `85904 KB`，回收约 `564912 KB`。
+2. 白名单保留 `42` 个模块（含 `apisetschema.dll`、`ntoskrnl.exe`、`winemenubuilder.exe` 等关键项）。
+3. `--help`、`--print-stages`、`ADM -> EC3` 真实编码均通过（退出码 `0`）。
+4. 回滚可用：
+
+```bash
+./scripts/prune_fex_wine64_windows.sh --rollback
+```
+
+性能观察（Run ID: `20260307_213806`）：
+
+1. `encode_adm_to_ec3`: `18.850s`（可用）
+2. `help_warm`: `3.103s`（可用）
+3. `help_cold`: `307.393s`（明显回归，首启前缀初始化会触发 `run_wineboot boot event wait timed out`）
+
+结论：
+
+1. 该裁剪适合“固定前缀复用”的场景（warm/persistent）。
+2. 如果要求“空前缀冷启动快”，当前白名单仍需补全启动相关模块（下一阶段优化点）。
