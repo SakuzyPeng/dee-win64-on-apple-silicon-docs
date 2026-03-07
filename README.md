@@ -2,6 +2,8 @@
 
 本仓库用于记录并复现实验：在 Apple Silicon macOS 上通过 `gcenx/wine` 运行 Dolby Encoding Engine（Windows x64）。
 
+补充：`FEX` 容器路线用于降低对 `Rosetta 2` 的依赖，提前应对苹果未来可能弃用 `Rosetta 2` 的风险。
+
 English README: [README.en.md](./README.en.md)
 免责声明 / Disclaimer: [DISCLAIMER.md](./DISCLAIMER.md)
 许可证 / Licenses: [LICENSE](./LICENSE), [LICENSE-docs](./LICENSE-docs)
@@ -10,6 +12,8 @@ English README: [README.en.md](./README.en.md)
 
 - 中文（主文档）：[DEE_Encoding_on_macOS_with_gcenx_wine.md](./DEE_Encoding_on_macOS_with_gcenx_wine.md)
 - English: [DEE_Encoding_on_macOS_with_gcenx_wine.en.md](./DEE_Encoding_on_macOS_with_gcenx_wine.en.md)
+- FEX 容器指南（中文）：[DEE_Docker_FEX_Experiment.md](./DEE_Docker_FEX_Experiment.md)
+- FEX Container Guide (English): [DEE_Docker_FEX_Experiment.en.md](./DEE_Docker_FEX_Experiment.en.md)
 - 容器化方案（Docker + 自编译精简 Wine）：[DEE_Docker_Minimal_Wine.md](./DEE_Docker_Minimal_Wine.md)
 
 ## 仓库包含内容

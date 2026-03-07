@@ -2,6 +2,8 @@
 
 This repository documents and reproduces a practical setup for running Dolby Encoding Engine (Windows x64) on Apple Silicon macOS via `gcenx/wine`.
 
+Note: the `FEX` container track is used to reduce dependency on `Rosetta 2` and prepare for a potential future deprecation of `Rosetta 2` by Apple.
+
 ## Read Me in Chinese
 
 - 中文 README: [README.md](./README.md)
@@ -12,6 +14,8 @@ This repository documents and reproduces a practical setup for running Dolby Enc
 
 - Chinese (primary): [DEE_Encoding_on_macOS_with_gcenx_wine.md](./DEE_Encoding_on_macOS_with_gcenx_wine.md)
 - English: [DEE_Encoding_on_macOS_with_gcenx_wine.en.md](./DEE_Encoding_on_macOS_with_gcenx_wine.en.md)
+- FEX container guide (Chinese): [DEE_Docker_FEX_Experiment.md](./DEE_Docker_FEX_Experiment.md)
+- FEX container guide (English): [DEE_Docker_FEX_Experiment.en.md](./DEE_Docker_FEX_Experiment.en.md)
 - Docker containerized approach (self-compiled minimal Wine): [DEE_Docker_Minimal_Wine.en.md](./DEE_Docker_Minimal_Wine.en.md)
 
 ## Included

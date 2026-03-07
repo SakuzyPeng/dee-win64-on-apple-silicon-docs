@@ -1,77 +1,71 @@
-# DEE 容器方案（FEX + Wine / ARM64）
+# DEE FEX 容器运行指南（ARM64）
 
-## 当前状态（2026-03-07）
+## 目标
+本指南用于在 Apple Silicon 上用 `FEX + Wine + linux/arm64` 运行 DEE CLI 编码任务，并提供可迁移的分发流程。
 
-`FEX + Wine + linux/arm64` 方案已跑通：
+采用 FEX 的战略目的：降低对 `Rosetta 2` 的依赖，提前应对苹果未来可能弃用 `Rosetta 2` 的风险。
 
-1. `dee.exe --help` 可执行（退出码 `0`）。
-2. 真实编码可执行：`testADM.wav -> testADM_fex_atmos.ec3`（退出码 `0`）。
-3. `TSO Emulation: Enabled`（`FEXGetConfig --tso-emulation-info`）。
-4. FEX/Wine thunk 组件在位（`libarm64ecfex.dll`、`libwow64fex.dll`、`GuestThunks`）。
+适用范围：
+- 纯命令行编码任务（无 GUI 依赖）
+- 以容器化迁移为主
+- 默认分发包不包含 `dolby_encoding_engine`
 
-这份文档用于固化“当前可复现方案”。
+不在本指南中展开：
+- 历史实验过程与逐轮基准明细
+- 普通 Wine 方案对比
 
-## 相关文件
+## 当前可用结论（2026-03-07）
+- `dee.exe --help` 可运行，退出码 `0`
+- `ADM -> Atmos DDP EC3` 真实编码可运行，退出码 `0`
+- `TSO Emulation: Enabled`
+- FEX/Wine thunks 在位（`libarm64ecfex.dll`、`libwow64fex.dll`、`GuestThunks`）
 
-- `Dockerfile.fex-lab`
+## 关键脚本
+初始化与运行：
 - `scripts/build_fex_lab.sh`
 - `scripts/prepare_fex_rootfs.sh`
 - `scripts/install_wine_in_fex_rootfs_chroot.sh`
 - `scripts/run_fex_lab_probe.sh`
 - `scripts/run_dee_with_fex.sh`
-- `scripts/prune_fex_rootfs.sh`
-- `scripts/prune_fex_wine32.sh`
-- `scripts/prune_fex_i386_runtime.sh`
-- `scripts/prune_fex_wine64_windows.sh`
+- `scripts/run_dee_with_fex_persistent.sh`
+
+裁剪：
 - `scripts/prune_fex_conservative.sh`
 - `scripts/prune_fex_medium.sh`
 - `scripts/prune_fex_aggressive.sh`
+
+分发：
 - `scripts/build_fex_release_bundle.sh`
 - `scripts/unpack_fex_release_bundle.sh`
 
-## 一次性准备
-
-### 1) 构建镜像
-
+## 一次性初始化
+1. 构建实验镜像
 ```bash
 ./scripts/build_fex_lab.sh
 ```
 
-### 2) 准备 RootFS（下载 + 解压）
-
+2. 准备 RootFS（自动下载并解压 Ubuntu 24.04）
 ```bash
 ./scripts/prepare_fex_rootfs.sh
 ```
 
-说明：
-
-- RootFS URL 从 `https://rootfs.fex-emu.gg/RootFS_links.json` 自动选择（`ubuntu/24.04/squashfs`）。
-- 已下载/已解压会复用，不重复下载。
-
-### 3) 向 RootFS 注入 Wine
-
+3. 在 RootFS 中安装并修复 Wine 布局
 ```bash
 ./scripts/install_wine_in_fex_rootfs_chroot.sh
 ```
 
-该脚本会在 `amd64 chroot` 中安装并修复 Wine 运行布局（含 `wine` 元包和 `i386` 路径链接）。
-
-### 4) 基础探测
-
+4. 基础探测
 ```bash
 ./scripts/run_fex_lab_probe.sh
 ```
 
-## 运行方式
-
-### 1) CLI 冒烟
-
+## 日常运行
+CLI 冒烟：
 ```bash
 ./scripts/run_dee_with_fex.sh --help
 ```
 
-### 2) 真实编码（ADM 类型样例）
-
+ADM 示例编码：
 ```bash
 ./scripts/run_dee_with_fex.sh \
   --xml y:/dolby_encoding_engine/xml_templates/encode_to_atmos_ddp/music/album_encode_to_atmos_ddp_ec3.test.xml \
@@ -83,279 +77,109 @@
   --verbose info
 ```
 
-## 分发打包（release）
+## 运行约定（避免回归）
+`run_dee_with_fex.sh` 已内置：
+- `WINEPREFIX` 初始化
+- 盘符映射
+- `c:` -> `../drive_c`
+- `z:` -> `FEX_ROOTFS`
+- `y:` -> `/workspace`
+- 首次自动 `wineboot -u`
 
-### 1) 构建分发包（默认不含 DEE 引擎）
+若映射缺失，典型报错：
+- `could not load kernel32.dll, status c0000135`
 
+## 分发与迁移
+### 构建分发包（默认不含 DEE）
 ```bash
 ./scripts/build_fex_release_bundle.sh --tag local_test
 ```
 
-输出目录：
-
+输出：
 - `release/dee-fex-runtime-local_test/`
-  - `dee-fex-runtime-local_test.tar.zst`
-  - `dee-fex-runtime-local_test.sha256`
-  - `dee-fex-runtime-local_test.manifest.txt`
 - `release/latest/`（固定发布目录）
-  - `dee-fex-runtime.tar.zst`
-  - `dee-fex-runtime.sha256`
-  - `dee-fex-runtime.manifest.txt`
 
-可选：包含本地 `dolby_encoding_engine`（仅内部分发场景建议）：
+`release/latest/` 固定文件名：
+- `dee-fex-runtime.tar.zst`
+- `dee-fex-runtime.sha256`
+- `dee-fex-runtime.manifest.txt`
 
+可选：包含本地 DEE 引擎（仅内部分发场景）
 ```bash
 ./scripts/build_fex_release_bundle.sh --include-engine --tag with_engine
 ```
 
-### 2) 解包与校验
-
+### 解包与校验
 ```bash
 ./scripts/unpack_fex_release_bundle.sh \
   --archive release/latest/dee-fex-runtime.tar.zst \
-  --sha256  release/latest/dee-fex-runtime.sha256 \
+  --sha256 release/latest/dee-fex-runtime.sha256 \
   --dest /tmp/dee-fex-runtime-test
 ```
 
-解包后目录为 `/tmp/dee-fex-runtime-test/runtime`，其中已包含：
-
-1. `scripts/run_dee_with_fex.sh`
-2. `scripts/run_dee_with_fex_persistent.sh`
-3. `tmp_fex_rootfs/RootFS/Ubuntu_24_04`
-
-如果分发包未包含 `dolby_encoding_engine`，运行时指定本机 DEE 目录：
-
+若分发包不含 DEE，运行时指定本机引擎目录：
 ```bash
 DEE_DIR=/abs/path/to/dolby_encoding_engine \
   bash /tmp/dee-fex-runtime-test/runtime/scripts/run_dee_with_fex.sh --help
 ```
 
-## 本次验证结果
+## 验收清单
+1. 功能冒烟
+```bash
+./scripts/run_dee_with_fex.sh --help
+./scripts/run_dee_with_fex.sh --print-stages
+```
 
-### 功能结果
+2. 真实编码
+- `ADM -> EC3` 成功
+- 输出文件与日志存在
 
-1. `dee.exe --help`：通过，退出码 `0`。
-2. `testADM.wav -> testADM_fex_atmos.ec3`：通过，退出码 `0`。
-3. 编码日志显示 `encode_to_atmos_ddp` 流程完整，进度到 `100%`。
-
-### 性能快照（当前机器）
-
-1. `--help` 热启动：`real 1.95s`。
-2. 真实编码外层总耗时：`real 17.94s`。
-3. DEE 内部任务耗时：`Job execution took 11 seconds`。
-
-### 产物
-
-- `testADM_fex_atmos.ec3`
-- `testADM_fex_atmos.log`
-
-## 关键实现点（避免回归）
-
-`run_dee_with_fex.sh` 已内置并自动处理：
-
-1. `WINEPREFIX` 初始化。
-2. 盘符映射：
-   - `c:` -> `../drive_c`
-   - `z:` -> `FEX_ROOTFS`
-   - `y:` -> `/workspace`
-3. 首次执行 `wineboot -u` 进行前缀初始化。
-
-如果这组映射丢失，典型报错是 `could not load kernel32.dll, status c0000135`。
-
-## TSO / Thunks 检查
-
-### TSO
-
+3. TSO 检查
 ```bash
 docker run --rm --platform linux/arm64 dee-fex-lab:local \
   bash -lc 'FEXGetConfig --tso-emulation-info'
 ```
+应包含：`TSO Emulation: Enabled`
 
-关键字段应包含：
-
-- `TSO Emulation: Enabled`
-
-### Thunks
-
+4. Thunks 检查
 ```bash
 docker run --rm --platform linux/arm64 dee-fex-lab:local \
   bash -lc 'ls -l /usr/lib/wine/aarch64-windows/libarm64ecfex.dll /usr/lib/wine/aarch64-windows/libwow64fex.dll'
 ```
-
-以及：
-
+并确认目录存在：
 - `/usr/share/fex-emu/GuestThunks`
 - `/usr/share/fex-emu/GuestThunks_32`
 - `/usr/share/fex-emu/ThunksDB.json`
 
-## 已知问题
+## 体积基线（不含 DEE，2026-03-07）
+- 分发包：`release/latest/dee-fex-runtime.tar.zst` 约 `150M`
+- 解包 RootFS：约 `573M`
+- 运行镜像：`dee-fex-lab:local` 约 `632MB`
+- 本机完整运行环境（镜像 + RootFS）：约 `1.2GB`
 
-1. `FEXRootFSFetcher` 在无输入 `tty` 场景可能触发 `std::invalid_argument`。
-2. `--as-is` 模式依赖 FUSE，普通容器环境通常不可用。
-3. 无 GUI 环境会出现 `nodrv_CreateWindow` 日志，对 CLI 编码任务通常无影响。
-4. 通用 XML 模板中的 `PATH/FILE_NAME` 占位符需要显式覆盖，否则会报目录不存在。
+## 裁剪策略（推荐）
+推荐顺序：`conservative -> medium -> aggressive`
 
-## 下一步
-
-1. 先做标准化性能基线脚本（冷启动、热启动、真实编码）。
-2. 再按基线做精简（RootFS 与 Wine 组件），每步回归功能与耗时。
-
-## 已验证裁剪记录（2026-03-07）
-
-### 1) wine32 组件裁剪（已验证）
-
-```bash
-./scripts/prune_fex_wine32.sh --apply
-```
-
-结果：
-
-1. RootFS 约回收 `559688 KB`。
-2. `run_dee_with_fex*.sh` 默认已切到 `WINE_BIN=/usr/lib/wine/wine64`。
-3. `--help`、`--print-stages`、`ADM -> EC3` 编码均通过。
-
-### 2) i386 Linux 运行库裁剪（已验证）
-
-```bash
-./scripts/prune_fex_i386_runtime.sh --apply
-```
-
-结果：
-
-1. RootFS 从 `2675196 KB` 降至 `2101276 KB`，约回收 `573920 KB`。
-2. `--help`、`--print-stages`、`ADM -> EC3` 编码均通过。
-3. 可回滚：
-
-```bash
-./scripts/prune_fex_i386_runtime.sh --rollback
-```
-
-### 3) 裁剪后 FEX 基线（RUNS=3）
-
-运行命令：
-
-```bash
-RUNS=3 MODE=fex WINE_BIN=/usr/lib/wine/wine64 ./scripts/benchmark_fex_native_baseline.sh
-```
-
-Run ID: `20260307_201544`
-
-1. `help_cold`: `12.903s`
-2. `help_warm`: `1.993s`
-3. `encode_adm_to_ec3`: `17.050s`
-4. `mean_dee_job_s`: `10.000s`
-
-### 4) wine64 Windows 模块白名单裁剪（实验通过，含冷启动修复）
-
-```bash
-./scripts/prune_fex_wine64_windows.sh --collect
-./scripts/prune_fex_wine64_windows.sh --apply
-```
-
-结果：
-
-1. `x86_64-windows` 目录从 `648520 KB` 降至 `85904 KB`，回收约 `564912 KB`。
-2. 白名单保留 `49` 个模块（在基础集上补了 `newdev.dll`、`hidclass.sys`、`hidparse.sys`、`winebus.sys`、`winehid.sys`、`wineusb.sys`、`winexinput.sys`，用于修复冷启动超时并消除 `winebus.sys` 依赖告警）。
-3. `--help`、`--print-stages`、`ADM -> EC3` 真实编码均通过（退出码 `0`）。
-4. 回滚可用：
-
-```bash
-./scripts/prune_fex_wine64_windows.sh --rollback
-```
-
-性能观察（Run ID: `20260307_222156`）：
-
-1. `encode_adm_to_ec3`: `18.090s`
-2. `help_warm`: `2.093s`
-3. `help_cold`: `7.830s`
-
-结论：
-
-1. 该裁剪在“固定前缀复用”和“空前缀冷启动”场景都可用。
-2. 体积收益仍显著：`x86_64-windows` 由约 `633M` 降至约 `85M`。
-
-### 5) RootFS 保守档裁剪（已验证）
-
+命令：
 ```bash
 ./scripts/prune_fex_conservative.sh --apply
-```
-
-策略：
-
-1. 清理 `apt/swcatalog` 缓存。
-2. 移除 `renderdoc/gfxrecon/spirv2dxil` 相关工具与库。
-3. 全部采用“移动到备份目录”方式，可回滚。
-
-结果：
-
-1. RootFS 从 `1540096 KB` 降至 `1139616 KB`，回收约 `400480 KB`。
-2. 三项回归通过：`--help`、`--print-stages`、`ADM -> EC3` 编码均 `exit 0`。
-3. 基线（Run ID: `20260307_225108`）：
-   - `help_cold`: `8.023s`
-   - `help_warm`: `2.130s`
-   - `encode_adm_to_ec3`: `18.053s`
-
-回滚：
-
-```bash
-./scripts/prune_fex_conservative.sh --rollback
-```
-
-### 6) RootFS 中等档裁剪（已验证）
-
-```bash
 ./scripts/prune_fex_medium.sh --apply
-```
-
-策略：
-
-1. 清理 Python/Perl 运行时树。
-2. 清理 CMake/Git 工具链。
-3. 清理 `icons/gtk/X11` 资源目录（CLI 任务通常不依赖）。
-4. 全部采用“移动到备份目录”方式，可回滚。
-
-结果：
-
-1. 在保守档基础上，RootFS 从 `1139616 KB` 降至 `915500 KB`，再回收约 `224116 KB`。
-2. 三项回归通过：`--help`、`--print-stages`、`ADM -> EC3` 编码均 `exit 0`。
-3. 基线（Run ID: `20260307_225554`）：
-   - `help_cold`: `8.093s`
-   - `help_warm`: `2.167s`
-   - `encode_adm_to_ec3`: `18.200s`
-
-回滚：
-
-```bash
-./scripts/prune_fex_medium.sh --rollback
-```
-
-### 7) RootFS 激进档裁剪（已验证）
-
-```bash
 ./scripts/prune_fex_aggressive.sh --apply
 ```
 
-策略：
-
-1. 清理 `LLVM/mesa/vulkan` 大体积库。
-2. 清理 `dri` 驱动与 `mesa-demos/vulkan` share 数据。
-3. 全部采用“移动到备份目录”方式，可回滚。
-
-结果：
-
-1. 在中等档基础上，RootFS 从 `915500 KB` 降至 `587096 KB`，再回收约 `328404 KB`。
-2. 三项回归通过：`--help`、`--print-stages`、`ADM -> EC3` 编码均 `exit 0`。
-3. 基线（Run ID: `20260307_230013`）：
-   - `help_cold`: `8.477s`
-   - `help_warm`: `2.220s`
-   - `encode_adm_to_ec3`: `18.283s`
+每步裁剪后都执行验收清单。需要回滚时，使用对应脚本的 `--rollback`。
 
 说明：
+- `aggressive` 体积最小，但可能有轻微性能回退
+- 如果更重视性能稳定性，优先停在 `medium`
 
-1. 功能可用，但性能相对中等档有轻微回退（约 `0.08s` 量级）。
+## 常见问题
+1. `FEXRootFSFetcher` 在无交互 tty 场景可能异常
+2. `--as-is` 依赖 FUSE，普通容器环境通常不可用
+3. 无 GUI 时的 `nodrv_CreateWindow` 日志通常可忽略
+4. XML 模板中的 `PATH/FILE_NAME` 占位符必须显式覆盖
+5. 打包报 `No space left on device` 时，清理 `tmp_release_stage/` 与旧 `release/*` 产物
 
-回滚：
-
-```bash
-./scripts/prune_fex_aggressive.sh --rollback
-```
+## 维护原则
+- 这是一份操作指南，只保留可执行流程与验收标准
+- 过程性实验细节请通过 Git 提交历史追溯
