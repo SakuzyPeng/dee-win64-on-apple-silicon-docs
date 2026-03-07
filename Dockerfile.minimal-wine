@@ -1,3 +1,5 @@
+# syntax=docker/dockerfile:1.7
+
 # Stage 1: Build Wine 9.0 (64-bit only, headless minimal)
 FROM --platform=linux/amd64 debian:bookworm AS builder
 
@@ -7,6 +9,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
     flex \
     bison \
+    ccache \
     wget \
     ca-certificates \
     pkg-config \
@@ -22,7 +25,14 @@ RUN wget -q https://dl.winehq.org/wine/source/9.0/wine-9.0.tar.xz && \
     tar xf wine-9.0.tar.xz && rm wine-9.0.tar.xz
 
 WORKDIR /build/wine-9.0
-RUN ./configure \
+RUN --mount=type=cache,target=/root/.cache/ccache \
+    export CCACHE_DIR=/root/.cache/ccache \
+           CC="ccache gcc" \
+           CXX="ccache g++" \
+           CFLAGS="-O2" \
+           CXXFLAGS="-O2" && \
+    ccache -M 10G && \
+    ./configure \
       --prefix=/usr \
       --enable-win64 \
       --disable-win16 \
@@ -36,22 +46,21 @@ RUN ./configure \
       --without-usb \
       --without-v4l2 \
       --without-opencl \
-      --without-openal \
       --without-cups \
       --without-sane \
       --without-dbus \
       --without-netapi \
       --without-pcap \
       --without-krb5 \
-      --without-ldap \
       --without-capi \
       --without-gphoto \
       --without-sdl \
-      --without-vkd3d \
       --without-fontconfig \
-      CFLAGS="-O2" CXXFLAGS="-O2" && \
+      2>&1 | tee /tmp/configure.log && \
+    ! grep -q "unrecognized options" /tmp/configure.log && \
     make -j$(nproc) && \
     make install DESTDIR=/wine-root && \
+    ccache -s || true && \
     find /wine-root -type f \( -name '*.so*' -o -name 'wine*' \) -exec strip -s {} \; 2>/dev/null || true && \
     rm -rf /wine-root/usr/share/man /wine-root/usr/share/doc /wine-root/usr/share/locale
 
