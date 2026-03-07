@@ -85,6 +85,7 @@ ADM 示例编码：
 - `z:` -> `FEX_ROOTFS`
 - `y:` -> `/workspace`
 - 首次自动 `wineboot -u`
+- 对 `y:/...` 的 `--temp/--log-file/--output` 自动创建宿主机目录（避免 temp 目录缺失）
 
 若映射缺失，典型报错：
 - `could not load kernel32.dll, status c0000135`
@@ -179,6 +180,7 @@ docker run --rm --platform linux/arm64 dee-fex-lab:local \
 3. 无 GUI 时的 `nodrv_CreateWindow` 日志通常可忽略
 4. XML 模板中的 `PATH/FILE_NAME` 占位符必须显式覆盖
 5. 打包报 `No space left on device` 时，清理 `tmp_release_stage/` 与旧 `release/*` 产物
+6. DEE 要求 `--temp` 指向的目录存在；若手工运行 `docker run`（非脚本）请先 `mkdir -p`
 
 ## 维护原则
 - 这是一份操作指南，只保留可执行流程与验收标准

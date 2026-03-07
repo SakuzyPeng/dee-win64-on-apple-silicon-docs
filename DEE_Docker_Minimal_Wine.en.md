@@ -196,6 +196,7 @@ docker run --rm --platform linux/amd64 \
 ```
 
 > **Path note:** Wine maps the container's root `/` to the `Z:` drive. Any host paths referenced in XML templates must be mounted at the same path inside the container so that `Z:/path/to/...` resolves correctly.
+> **Temp-dir note:** DEE requires the `--temp` target directory to already exist. If missing, DEE reports `Could not write to temp_dir` / `Could not build workflow` (error code `10`).
 
 ---
 
@@ -219,3 +220,4 @@ docker run --rm --platform linux/amd64 \
    - Remote build requires ~3 GB (for intermediate artifacts)
 2. **Platform emulation:** The `linux/amd64` image runs on Apple Silicon via Rosetta, which adds some performance overhead.
 3. **Single-machine recommendation:** For personal use on a Mac where `gcenx/wine` is already installed, the `~/bin/dee` wrapper script is lighter with no container overhead. The Docker approach is suited for team environments or CI/CD pipelines.
+4. **Frequent pitfall:** Always `mkdir -p` the `--temp` directory before encoding.

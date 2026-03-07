@@ -85,6 +85,7 @@ ADM sample encode:
 - `z:` -> `FEX_ROOTFS`
 - `y:` -> `/workspace`
 - First-run `wineboot -u`
+- Auto-creates host directories for `y:/...` `--temp/--log-file/--output` paths
 
 Typical failure when mappings are broken:
 - `could not load kernel32.dll, status c0000135`
@@ -179,6 +180,7 @@ Notes:
 3. `nodrv_CreateWindow` logs are usually harmless for CLI workloads
 4. XML templates with `PATH/FILE_NAME` placeholders must be explicitly overridden
 5. If packaging fails with `No space left on device`, clean `tmp_release_stage/` and old `release/*` artifacts
+6. DEE requires the `--temp` directory to exist; when running raw `docker run` (without scripts), create it first with `mkdir -p`
 
 ## Maintenance Rule
 - This file is an operator guide and keeps only executable workflow + acceptance criteria

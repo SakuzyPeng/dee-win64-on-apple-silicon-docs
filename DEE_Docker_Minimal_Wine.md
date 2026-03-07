@@ -196,6 +196,7 @@ docker run --rm --platform linux/amd64 \
 ```
 
 > **路径说明**：Wine 的 `Z:` 盘映射到容器内的根目录 `/`。XML 模板中引用的宿主机路径需以相同路径挂载进容器，使 `Z:/path/to/...` 能正确解析。
+> **临时目录说明**：DEE 要求 `--temp` 指向的目录已存在。若目录不存在，会报 `Could not write to temp_dir` / `Could not build workflow`（错误码 `10`）。
 
 ---
 
@@ -219,3 +220,4 @@ docker run --rm --platform linux/amd64 \
    - 远端构建需 3 GB（中间产物）
 2. **平台限制**：`linux/amd64` 镜像在 Apple Silicon 上经 Rosetta 模拟运行，有额外性能开销。
 3. **个人使用推荐**：单机场景下，`~/bin/dee` 脚本方案（直接调用 `gcenx/wine`）开销更低，无需容器。容器方案适合团队共享或 CI/CD 环境。
+4. **高频错误提醒**：执行编码前先 `mkdir -p` 目标 `--temp` 目录，避免 `temp_dir` 相关失败。

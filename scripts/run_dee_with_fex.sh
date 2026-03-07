@@ -12,6 +12,46 @@ WINEBOOT_TIMEOUT="${WINEBOOT_TIMEOUT:-120}"
 WINE_BIN="${WINE_BIN:-/usr/lib/wine/wine64}"
 DEE_WIN_EXE="${DEE_WIN_EXE:-y:/dolby_encoding_engine/dee.exe}"
 
+win_to_workspace_path() {
+  local win_path="$1"
+  local rel
+  if [[ "$win_path" =~ ^[Yy]:[\\/](.*)$ ]]; then
+    rel="${BASH_REMATCH[1]}"
+    rel="${rel//\\//}"
+    echo "$ROOT_DIR/$rel"
+    return 0
+  fi
+  return 1
+}
+
+prepare_workspace_dirs_from_args() {
+  local args=("$@")
+  local idx=0 opt val host_path
+  while (( idx < ${#args[@]} )); do
+    opt="${args[$idx]}"
+    case "$opt" in
+      --temp|--log-file|--output)
+        if (( idx + 1 < ${#args[@]} )); then
+          val="${args[$((idx + 1))]}"
+          if host_path="$(win_to_workspace_path "$val")"; then
+            case "$opt" in
+              --temp)
+                mkdir -p "$host_path"
+                ;;
+              --log-file|--output)
+                mkdir -p "$(dirname "$host_path")"
+                ;;
+            esac
+          fi
+          idx=$((idx + 2))
+          continue
+        fi
+        ;;
+    esac
+    idx=$((idx + 1))
+  done
+}
+
 if [[ ! -d "$DEE_DIR" ]]; then
   echo "DEE directory not found: $DEE_DIR" >&2
   exit 1
@@ -56,6 +96,7 @@ if [[ $# -eq 0 ]]; then
 fi
 
 ARGS=("$@")
+prepare_workspace_dirs_from_args "${ARGS[@]}"
 ARGS_Q="$(printf '%q ' "${ARGS[@]}")"
 ROOTFS_NAME="$(basename "$FEX_ROOTFS")"
 
