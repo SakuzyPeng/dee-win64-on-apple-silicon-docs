@@ -70,7 +70,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libgnutls30 \
     && rm -rf /var/lib/apt/lists/*
 
-RUN wine64 wineboot --init 2>/dev/null; wineserver -w; true
+RUN wine64 wineboot --init 2>/dev/null && wineserver -w || true
 
 WORKDIR /dee
 ENTRYPOINT ["wine64", "dee.exe"]

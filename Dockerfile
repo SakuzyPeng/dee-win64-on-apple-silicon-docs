@@ -20,8 +20,8 @@ RUN wine64 wineboot --init 2>/dev/null; wineserver -w; true
 
 # Install VC++ 2022 x64 redistributable (VCRUNTIME140 / MSVCP140 / UCRT)
 RUN wget -q "https://aka.ms/vs/17/release/vc_redist.x64.exe" -O /tmp/vcredist.exe && \
-    wine64 /tmp/vcredist.exe /install /quiet /norestart 2>/dev/null; \
-    wineserver -w; \
+    wine64 /tmp/vcredist.exe /install /quiet /norestart 2>/dev/null && \
+    wineserver -w && \
     rm /tmp/vcredist.exe
 
 # DEE binaries are mounted at runtime via -v, not baked into the image
