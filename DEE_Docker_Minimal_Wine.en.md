@@ -111,7 +111,45 @@ CMD ["--help"]
 
 ---
 
-## 6. Build Process
+## 6. Optimization Techniques
+
+### 6.1 Compilation-stage shrinkage
+
+| Technique | Method | Expected benefit |
+|---|---|---|
+| Disable unneeded subsystems | `./configure --without-x --without-gstreamer ...` | Reduce build time, fewer intermediate artifacts |
+| No debug symbols | `CFLAGS="-O2" CXXFLAGS="-O2"` (no `-g`) | Build artifacts: ~1.8 GB → ~800 MB |
+| Parallel build | `make -j$(nproc)` | Faster on multi-core systems (~35 min on 2 cores) |
+
+### 6.2 Install-stage shrinkage
+
+```bash
+# After Stage 1 build completes
+make install DESTDIR=/wine-root && \
+  # Strip all debug symbols from binaries and shared libraries
+  find /wine-root -type f \( -name '*.so*' -o -name 'wine*' \) -exec strip -s {} \; && \
+  # Remove docs, man pages, and locales (unused at runtime)
+  rm -rf /wine-root/usr/share/man \
+         /wine-root/usr/share/doc \
+         /wine-root/usr/share/locale
+```
+
+**Savings:**
+- `strip -s`: Removes all ELF symbols, reduces size by ~5–10%
+- Removing man/doc/locale: Saves ~10–20 MB
+
+### 6.3 Minimal runtime dependencies
+
+| Item | Debian wine64 package | Self-compiled |
+|---|---|---|
+| Runtime packages | ~80 | 4 |
+| Package list | X11, GStreamer, ALSA, Kerberos, etc. | `libfreetype6` `libxml2` `zlib1g` `libgnutls30` |
+
+DEE needs only core runtime libraries—no GUI, no audio hardware drivers, no network libraries.
+
+---
+
+## 7. Build Process
 
 Docker Hub was unreachable on the Mac, so the image was built on a remote Linux server and streamed back:
 
@@ -130,7 +168,7 @@ ssh user@remote "docker save dee-wine-minimal | gzip" | docker load
 
 ---
 
-## 7. Usage
+## 8. Usage
 
 DEE binaries are bind-mounted into the container at runtime rather than baked into the image, making updates easy and avoiding distribution of proprietary binaries.
 
@@ -159,7 +197,7 @@ docker run --rm --platform linux/amd64 \
 
 ---
 
-## 8. Verification Results
+## 9. Verification Results
 
 | Test | Result |
 |---|---|
@@ -171,7 +209,7 @@ docker run --rm --platform linux/amd64 \
 
 ---
 
-## 9. Notes
+## 10. Notes
 
 1. **Disk space:** Loading the 483 MB image locally requires approximately 500 MB of free space. The remote build requires ~3 GB.
 2. **Platform emulation:** The `linux/amd64` image runs on Apple Silicon via Rosetta, which adds some performance overhead.

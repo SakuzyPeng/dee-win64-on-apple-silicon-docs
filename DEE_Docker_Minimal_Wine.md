@@ -55,7 +55,45 @@ libfreetype6  libxml2  zlib1g  libgnutls30
 
 ---
 
-## 5. Dockerfile
+## 5. 裁剪策略
+
+### 5.1 编译阶段裁剪
+
+| 策略 | 方法 | 预期收益 |
+|---|---|---|
+| 禁用无关子系统 | `./configure --without-x --without-gstreamer ...` | 减少 build 时间，减少中间产物 |
+| 关闭调试信息 | `CFLAGS="-O2" CXXFLAGS="-O2"`（不加 `-g`） | 编译产物从 ~1.8 GB 压到 ~800 MB |
+| 并行编译 | `make -j$(nproc)` | 利用多核加速（2 核约 35 分钟） |
+
+### 5.2 安装阶段裁剪
+
+```bash
+# Stage 1 完成后
+make install DESTDIR=/wine-root && \
+  # 去掉所有二进制和库的调试符号
+  find /wine-root -type f \( -name '*.so*' -o -name 'wine*' \) -exec strip -s {} \; && \
+  # 删除多余文档和本地化文件
+  rm -rf /wine-root/usr/share/man \
+         /wine-root/usr/share/doc \
+         /wine-root/usr/share/locale
+```
+
+**收益**：
+- `strip -s`：删除 ELF 头中的所有符号，减少 ~5~10%
+- 删除 man/doc/locale：减少 ~10~20 MB
+
+### 5.3 运行时依赖最小化
+
+| 项 | Debian wine64 包 | 自编译版本 |
+|---|---|---|
+| 运行时包 | ~80 个 | 4 个 |
+| 包列表 | X11、GStreamer、ALSA、Kerberos 等 | `libfreetype6` `libxml2` `zlib1g` `libgnutls30` |
+
+DEE 只需最基础的运行库，无 GUI、无音频硬件、无网络库。
+
+---
+
+## 6. Dockerfile
 
 文件：`Dockerfile.minimal-wine`
 
@@ -111,7 +149,7 @@ CMD ["--help"]
 
 ---
 
-## 6. 构建方式
+## 7. 构建方式
 
 由于 Mac 本地无法访问 Docker Hub，在远端 Linux 服务器构建后流式传回：
 
@@ -130,7 +168,7 @@ ssh user@remote "docker save dee-wine-minimal | gzip" | docker load
 
 ---
 
-## 7. 使用方式
+## 8. 使用方式
 
 DEE 二进制挂载进容器，不打包进镜像（方便更新，也规避版权问题）。
 
@@ -159,7 +197,7 @@ docker run --rm --platform linux/amd64 \
 
 ---
 
-## 8. 验证结果
+## 9. 验证结果
 
 | 测试项 | 结果 |
 |---|---|
@@ -171,7 +209,7 @@ docker run --rm --platform linux/amd64 \
 
 ---
 
-## 9. 注意事项
+## 10. 注意事项
 
 1. **磁盘空间**：Mac 本地加载 483 MB 镜像约需 500 MB 可用空间；远端构建需 3 GB。
 2. **平台限制**：`linux/amd64` 镜像在 Apple Silicon 上经 Rosetta 模拟运行，有额外性能开销。
