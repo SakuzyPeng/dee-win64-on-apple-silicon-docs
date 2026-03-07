@@ -203,7 +203,7 @@ Run ID: `20260307_201544`
 结果：
 
 1. `x86_64-windows` 目录从 `648520 KB` 降至 `85904 KB`，回收约 `564912 KB`。
-2. 白名单保留 `48` 个模块（在基础集上补了 `newdev.dll`、`hidclass.sys`、`winebus.sys`、`winehid.sys`、`wineusb.sys`、`winexinput.sys`，用于修复冷启动超时）。
+2. 白名单保留 `49` 个模块（在基础集上补了 `newdev.dll`、`hidclass.sys`、`hidparse.sys`、`winebus.sys`、`winehid.sys`、`wineusb.sys`、`winexinput.sys`，用于修复冷启动超时并消除 `winebus.sys` 依赖告警）。
 3. `--help`、`--print-stages`、`ADM -> EC3` 真实编码均通过（退出码 `0`）。
 4. 回滚可用：
 

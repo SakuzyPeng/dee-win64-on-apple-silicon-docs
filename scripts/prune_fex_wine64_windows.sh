@@ -109,6 +109,7 @@ newdev.dll
 winedevice.exe
 ntoskrnl.exe
 hidclass.sys
+hidparse.sys
 winebus.sys
 winehid.sys
 wineusb.sys
