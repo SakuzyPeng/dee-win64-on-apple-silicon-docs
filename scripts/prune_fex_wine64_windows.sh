@@ -105,8 +105,14 @@ collect_mode() {
   cat <<'EOF' >> "$tmp_src"
 ntdll.dll
 apisetschema.dll
+newdev.dll
 winedevice.exe
 ntoskrnl.exe
+hidclass.sys
+winebus.sys
+winehid.sys
+wineusb.sys
+winexinput.sys
 wineboot.exe
 services.exe
 cmd.exe
