@@ -7,12 +7,13 @@ ENGINE_DIR="${ENGINE_DIR:-$ROOT_DIR/dolby_encoding_engine}"
 OUTPUT_BASE="${OUTPUT_BASE:-$ROOT_DIR/release}"
 BUNDLE_TAG="${BUNDLE_TAG:-$(date +%Y%m%d_%H%M%S)}"
 INCLUDE_ENGINE="${INCLUDE_ENGINE:-0}"
+PUBLISH_LATEST="${PUBLISH_LATEST:-1}"
 DRY_RUN=0
 
 usage() {
   cat <<'EOF'
 Usage:
-  scripts/build_fex_release_bundle.sh [--include-engine] [--dry-run] [--tag TAG]
+  scripts/build_fex_release_bundle.sh [--include-engine] [--no-latest] [--dry-run] [--tag TAG]
 
 Description:
   Build distributable runtime bundle (.tar.zst + .sha256) for FEX workflow.
@@ -26,12 +27,14 @@ Environment:
   ENGINE_DIR    DEE directory (default: dolby_encoding_engine)
   OUTPUT_BASE   Release output base (default: release/)
   BUNDLE_TAG    Bundle tag (default: timestamp)
+  PUBLISH_LATEST  Publish stable copy to release/latest (default: 1)
 EOF
 }
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
     --include-engine) INCLUDE_ENGINE=1 ;;
+    --no-latest) PUBLISH_LATEST=0 ;;
     --dry-run) DRY_RUN=1 ;;
     --tag)
       shift
@@ -65,10 +68,14 @@ fi
 
 BUNDLE_NAME="dee-fex-runtime-${BUNDLE_TAG}"
 OUT_DIR="$OUTPUT_BASE/$BUNDLE_NAME"
+LATEST_DIR="$OUTPUT_BASE/latest"
 STAGE_DIR="$ROOT_DIR/tmp_release_stage/$BUNDLE_NAME"
 ARCHIVE_PATH="$OUT_DIR/${BUNDLE_NAME}.tar.zst"
 SHA_PATH="$OUT_DIR/${BUNDLE_NAME}.sha256"
 MANIFEST_PATH="$OUT_DIR/${BUNDLE_NAME}.manifest.txt"
+LATEST_ARCHIVE_PATH="$LATEST_DIR/dee-fex-runtime.tar.zst"
+LATEST_SHA_PATH="$LATEST_DIR/dee-fex-runtime.sha256"
+LATEST_MANIFEST_PATH="$LATEST_DIR/dee-fex-runtime.manifest.txt"
 
 mkdir -p "$OUT_DIR"
 rm -rf "$STAGE_DIR"
@@ -78,26 +85,22 @@ rm -f "$ARCHIVE_PATH" "$SHA_PATH" "$MANIFEST_PATH"
 cp "$ROOT_DIR/scripts/run_dee_with_fex.sh" "$STAGE_DIR/runtime/scripts/"
 cp "$ROOT_DIR/scripts/run_dee_with_fex_persistent.sh" "$STAGE_DIR/runtime/scripts/"
 cp "$ROOT_DIR/scripts/unpack_fex_release_bundle.sh" "$STAGE_DIR/runtime/scripts/"
-cp "$ROOT_DIR/DEE_Docker_FEX_Experiment.md" "$STAGE_DIR/runtime/" 2>/dev/null || true
-cp -R "$ROOTFS_DIR" "$STAGE_DIR/runtime/tmp_fex_rootfs/RootFS/Ubuntu_24_04"
+if cp -cR "$ROOTFS_DIR" "$STAGE_DIR/runtime/tmp_fex_rootfs/RootFS/Ubuntu_24_04" 2>/dev/null; then
+  :
+else
+  cp -R "$ROOTFS_DIR" "$STAGE_DIR/runtime/tmp_fex_rootfs/RootFS/Ubuntu_24_04"
+fi
 
 if [[ "$INCLUDE_ENGINE" == "1" ]]; then
   cp -R "$ENGINE_DIR" "$STAGE_DIR/runtime/dolby_encoding_engine"
-fi
-
-ROOTFS_ABS="$(cd "$ROOTFS_DIR" && pwd)"
-if [[ -d "$ENGINE_DIR" ]]; then
-  ENGINE_ABS="$(cd "$ENGINE_DIR" && pwd)"
-else
-  ENGINE_ABS="$ENGINE_DIR"
 fi
 
 cat > "$STAGE_DIR/runtime/RELEASE_INFO.txt" <<EOF
 BUNDLE_NAME=$BUNDLE_NAME
 BUILD_TIME=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
 INCLUDE_ENGINE=$INCLUDE_ENGINE
-ROOTFS_DIR=$ROOTFS_ABS
-ENGINE_DIR=$ENGINE_ABS
+ROOTFS_LAYOUT=tmp_fex_rootfs/RootFS/Ubuntu_24_04
+ENGINE_LAYOUT=dolby_encoding_engine
 EOF
 
 if [[ "$DRY_RUN" == "1" ]]; then
@@ -107,13 +110,14 @@ if [[ "$DRY_RUN" == "1" ]]; then
 fi
 
 (cd "$STAGE_DIR" && tar -cf - runtime) | zstd -19 -T0 --force -o "$ARCHIVE_PATH"
-shasum -a 256 "$ARCHIVE_PATH" > "$SHA_PATH"
+(cd "$OUT_DIR" && shasum -a 256 "$(basename "$ARCHIVE_PATH")" > "$(basename "$SHA_PATH")")
 
 {
   echo "BUNDLE_NAME=$BUNDLE_NAME"
   echo "ARCHIVE=$(basename "$ARCHIVE_PATH")"
   echo "SHA256_FILE=$(basename "$SHA_PATH")"
   echo "INCLUDE_ENGINE=$INCLUDE_ENGINE"
+  echo "PUBLISH_LATEST=$PUBLISH_LATEST"
   echo ""
   echo "[sizes]"
   du -sh "$ARCHIVE_PATH" | awk '{print "archive="$1}'
@@ -123,6 +127,18 @@ shasum -a 256 "$ARCHIVE_PATH" > "$SHA_PATH"
   fi
 } > "$MANIFEST_PATH"
 
+if [[ "$PUBLISH_LATEST" == "1" ]]; then
+  mkdir -p "$LATEST_DIR"
+  cp "$ARCHIVE_PATH" "$LATEST_ARCHIVE_PATH"
+  (cd "$LATEST_DIR" && shasum -a 256 "$(basename "$LATEST_ARCHIVE_PATH")" > "$(basename "$LATEST_SHA_PATH")")
+  {
+    echo "BUNDLE_NAME=$BUNDLE_NAME"
+    echo "ARCHIVE=$(basename "$LATEST_ARCHIVE_PATH")"
+    echo "SHA256_FILE=$(basename "$LATEST_SHA_PATH")"
+    echo "SOURCE_DIR=$(basename "$OUT_DIR")"
+  } > "$LATEST_MANIFEST_PATH"
+fi
+
 rm -rf "$STAGE_DIR"
 
 echo "Release bundle created:"
@@ -130,3 +146,9 @@ echo "  Archive : $ARCHIVE_PATH"
 echo "  SHA256  : $SHA_PATH"
 echo "  Manifest: $MANIFEST_PATH"
 du -sh "$ARCHIVE_PATH"
+if [[ "$PUBLISH_LATEST" == "1" ]]; then
+  echo "Published latest:"
+  echo "  Archive : $LATEST_ARCHIVE_PATH"
+  echo "  SHA256  : $LATEST_SHA_PATH"
+  echo "  Manifest: $LATEST_MANIFEST_PATH"
+fi

@@ -17,7 +17,7 @@ Description:
   Verify and unpack a FEX runtime release bundle (.tar.zst).
 
 Defaults:
-  - --archive: auto-detect latest release/*.tar.zst under repo root
+  - --archive: prefer release/latest/dee-fex-runtime.tar.zst, else auto-detect latest release/*.tar.zst
   - --sha256:  auto-detect from archive path (<name>.sha256)
   - --dest:    repository root
 EOF
@@ -58,13 +58,18 @@ if ! command -v zstd >/dev/null 2>&1; then
 fi
 
 if [[ -z "$ARCHIVE_PATH" ]]; then
-  mapfile -t CANDIDATES < <(find "$ROOT_DIR/release" -type f -name '*.tar.zst' 2>/dev/null | sort)
-  if [[ "${#CANDIDATES[@]}" -eq 0 ]]; then
-    echo "No archive found under: $ROOT_DIR/release" >&2
-    echo "Use --archive FILE to specify one." >&2
-    exit 1
+  PREFERRED_ARCHIVE="$ROOT_DIR/release/latest/dee-fex-runtime.tar.zst"
+  if [[ -f "$PREFERRED_ARCHIVE" ]]; then
+    ARCHIVE_PATH="$PREFERRED_ARCHIVE"
+  else
+    mapfile -t CANDIDATES < <(find "$ROOT_DIR/release" -type f -name '*.tar.zst' 2>/dev/null | sort)
+    if [[ "${#CANDIDATES[@]}" -eq 0 ]]; then
+      echo "No archive found under: $ROOT_DIR/release" >&2
+      echo "Use --archive FILE to specify one." >&2
+      exit 1
+    fi
+    ARCHIVE_PATH="${CANDIDATES[-1]}"
   fi
-  ARCHIVE_PATH="${CANDIDATES[-1]}"
 fi
 
 [[ -f "$ARCHIVE_PATH" ]] || { echo "Archive not found: $ARCHIVE_PATH" >&2; exit 1; }

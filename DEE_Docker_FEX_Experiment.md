@@ -97,6 +97,10 @@
   - `dee-fex-runtime-local_test.tar.zst`
   - `dee-fex-runtime-local_test.sha256`
   - `dee-fex-runtime-local_test.manifest.txt`
+- `release/latest/`（固定发布目录）
+  - `dee-fex-runtime.tar.zst`
+  - `dee-fex-runtime.sha256`
+  - `dee-fex-runtime.manifest.txt`
 
 可选：包含本地 `dolby_encoding_engine`（仅内部分发场景建议）：
 
@@ -108,8 +112,8 @@
 
 ```bash
 ./scripts/unpack_fex_release_bundle.sh \
-  --archive release/dee-fex-runtime-local_test/dee-fex-runtime-local_test.tar.zst \
-  --sha256  release/dee-fex-runtime-local_test/dee-fex-runtime-local_test.sha256 \
+  --archive release/latest/dee-fex-runtime.tar.zst \
+  --sha256  release/latest/dee-fex-runtime.sha256 \
   --dest /tmp/dee-fex-runtime-test
 ```
 
