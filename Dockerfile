@@ -1,6 +1,8 @@
 # Platform: linux/amd64 (required — DEE is Windows x64, runs via Wine on amd64)
 FROM --platform=linux/amd64 debian:bookworm-slim
 
+LABEL org.opencontainers.image.source="https://github.com/SakuzyPeng/dee-win64-on-apple-silicon-docs"
+
 ENV DEBIAN_FRONTEND=noninteractive \
     WINEDEBUG=fixme-all \
     WINEPREFIX=/wine

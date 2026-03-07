@@ -3,6 +3,8 @@
 # Experimental ARM64 lab image for FEX + Wine integration checks.
 FROM --platform=linux/arm64 ubuntu:24.04
 
+LABEL org.opencontainers.image.source="https://github.com/SakuzyPeng/dee-win64-on-apple-silicon-docs"
+
 ENV DEBIAN_FRONTEND=noninteractive
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
