@@ -24,6 +24,7 @@
 - `scripts/prune_fex_i386_runtime.sh`
 - `scripts/prune_fex_wine64_windows.sh`
 - `scripts/prune_fex_conservative.sh`
+- `scripts/prune_fex_medium.sh`
 
 ## 一次性准备
 
@@ -248,4 +249,32 @@ Run ID: `20260307_201544`
 
 ```bash
 ./scripts/prune_fex_conservative.sh --rollback
+```
+
+### 6) RootFS 中等档裁剪（已验证）
+
+```bash
+./scripts/prune_fex_medium.sh --apply
+```
+
+策略：
+
+1. 清理 Python/Perl 运行时树。
+2. 清理 CMake/Git 工具链。
+3. 清理 `icons/gtk/X11` 资源目录（CLI 任务通常不依赖）。
+4. 全部采用“移动到备份目录”方式，可回滚。
+
+结果：
+
+1. 在保守档基础上，RootFS 从 `1139616 KB` 降至 `915500 KB`，再回收约 `224116 KB`。
+2. 三项回归通过：`--help`、`--print-stages`、`ADM -> EC3` 编码均 `exit 0`。
+3. 基线（Run ID: `20260307_225554`）：
+   - `help_cold`: `8.093s`
+   - `help_warm`: `2.167s`
+   - `encode_adm_to_ec3`: `18.200s`
+
+回滚：
+
+```bash
+./scripts/prune_fex_medium.sh --rollback
 ```
