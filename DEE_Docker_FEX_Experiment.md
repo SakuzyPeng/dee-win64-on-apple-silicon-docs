@@ -23,6 +23,7 @@
 - `scripts/prune_fex_wine32.sh`
 - `scripts/prune_fex_i386_runtime.sh`
 - `scripts/prune_fex_wine64_windows.sh`
+- `scripts/prune_fex_conservative.sh`
 
 ## 一次性准备
 
@@ -221,3 +222,30 @@ Run ID: `20260307_201544`
 
 1. 该裁剪在“固定前缀复用”和“空前缀冷启动”场景都可用。
 2. 体积收益仍显著：`x86_64-windows` 由约 `633M` 降至约 `85M`。
+
+### 5) RootFS 保守档裁剪（已验证）
+
+```bash
+./scripts/prune_fex_conservative.sh --apply
+```
+
+策略：
+
+1. 清理 `apt/swcatalog` 缓存。
+2. 移除 `renderdoc/gfxrecon/spirv2dxil` 相关工具与库。
+3. 全部采用“移动到备份目录”方式，可回滚。
+
+结果：
+
+1. RootFS 从 `1540096 KB` 降至 `1139616 KB`，回收约 `400480 KB`。
+2. 三项回归通过：`--help`、`--print-stages`、`ADM -> EC3` 编码均 `exit 0`。
+3. 基线（Run ID: `20260307_225108`）：
+   - `help_cold`: `8.023s`
+   - `help_warm`: `2.130s`
+   - `encode_adm_to_ec3`: `18.053s`
+
+回滚：
+
+```bash
+./scripts/prune_fex_conservative.sh --rollback
+```
