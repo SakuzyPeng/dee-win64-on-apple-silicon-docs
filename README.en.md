@@ -10,6 +10,39 @@ Note: the `FEX` container track is used to reduce dependency on `Rosetta 2` and 
 - Disclaimer: [DISCLAIMER.md](./DISCLAIMER.md)
 - Licenses: [LICENSE](./LICENSE), [LICENSE-docs](./LICENSE-docs)
 
+## Container Quick Start (GHCR)
+
+> GitHub Packages renders the repository README; use the image-specific entry points below.
+
+### 1) FEX track (reduce dependency on Rosetta 2)
+
+- Image: `ghcr.io/sakuzypeng/dee-fex-lab:latest`
+- Pull:
+  ```bash
+  docker pull ghcr.io/sakuzypeng/dee-fex-lab:latest
+  ```
+- Quick smoke test:
+  ```bash
+  IMAGE_TAG=ghcr.io/sakuzypeng/dee-fex-lab:latest ./scripts/run_dee_with_fex.sh --help
+  ```
+- Guide: [DEE_Docker_FEX_Experiment.en.md](./DEE_Docker_FEX_Experiment.en.md)
+
+### 2) Rosetta 2 track (non-FEX compatibility path)
+
+- Image: `ghcr.io/sakuzypeng/dee-wine-minimal:legacy-rosetta2-latest`
+- Pull:
+  ```bash
+  docker pull ghcr.io/sakuzypeng/dee-wine-minimal:legacy-rosetta2-latest
+  ```
+- Quick smoke test (mount DEE directory):
+  ```bash
+  docker run --rm --platform linux/amd64 \
+    -v /path/to/dolby_encoding_engine:/dee \
+    ghcr.io/sakuzypeng/dee-wine-minimal:legacy-rosetta2-latest \
+    --help
+  ```
+- Guide: [DEE_Docker_Minimal_Wine.en.md](./DEE_Docker_Minimal_Wine.en.md)
+
 ## Documentation
 
 - English: [DEE_Encoding_on_macOS_with_gcenx_wine.en.md](./DEE_Encoding_on_macOS_with_gcenx_wine.en.md)
