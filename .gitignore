@@ -14,6 +14,9 @@
 # Logs and temp outputs
 *.log
 tmp_dee/
+.buildx-cache/
+.buildx-cache-new/
+tmp_fex_rootfs/
 
 # Local extracted tool bundle
 dolby_encoding_engine/

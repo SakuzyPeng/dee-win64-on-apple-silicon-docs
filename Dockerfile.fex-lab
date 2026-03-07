@@ -1,0 +1,28 @@
+# syntax=docker/dockerfile:1.7
+
+# Experimental ARM64 lab image for FEX + Wine integration checks.
+FROM --platform=linux/arm64 ubuntu:24.04
+
+ENV DEBIAN_FRONTEND=noninteractive
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    software-properties-common \
+    ca-certificates \
+    gnupg \
+    curl \
+    && add-apt-repository -y ppa:fex-emu/fex \
+    && apt-get update \
+    && apt-get install -y --no-install-recommends \
+    fex-emu-armv8.2 \
+    fex-emu-wine \
+    && rm -rf /var/lib/apt/lists/*
+
+# Basic sanity checks at build time; keep non-fatal for CI portability.
+RUN command -v FEX
+RUN command -v FEXBash
+RUN command -v FEXRootFSFetcher
+RUN test -f /usr/lib/wine/aarch64-windows/libarm64ecfex.dll
+RUN test -f /usr/lib/wine/aarch64-windows/libwow64fex.dll
+
+WORKDIR /workspace
+CMD ["bash"]
