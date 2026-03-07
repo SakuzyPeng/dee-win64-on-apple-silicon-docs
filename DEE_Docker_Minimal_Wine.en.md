@@ -12,7 +12,7 @@ The self-compiled minimal Wine 9.0 container (`dee-wine-minimal`) runs `dee.exe`
 
 1. `dee.exe --print-stages -l license.lic` loads all plugins and the license correctly.
 2. A real template-based encode (`testADM.wav -> testADM_out.ec3`) completes with 100% progress.
-3. Image size: **483 MB** — approximately 45% smaller than the Debian `wine64` package approach (886 MB).
+3. Image size: **442 MB** — approximately 50% smaller than the Debian `wine64` package approach (886 MB).
 
 ---
 
@@ -31,7 +31,7 @@ The self-compiled minimal Wine 9.0 container (`dee-wine-minimal`) runs `dee.exe`
 | Approach | Image size | Runtime packages | Build method |
 |---|---|---|---|
 | Debian `wine64` package | 886 MB | ~80 | `apt install wine64` |
-| **Self-compiled minimal Wine 9.0** | **483 MB** | **4** | Source build, unused subsystems disabled |
+| **Self-compiled minimal Wine 9.0** | **442 MB** | **4** | Source build, unused subsystems disabled, binaries stripped |
 
 ### Disabled Wine Subsystems
 

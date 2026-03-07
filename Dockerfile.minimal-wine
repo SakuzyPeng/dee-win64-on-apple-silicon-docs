@@ -50,7 +50,9 @@ RUN ./configure \
       --without-fontconfig \
       CFLAGS="-O2" CXXFLAGS="-O2" && \
     make -j$(nproc) && \
-    make install DESTDIR=/wine-root
+    make install DESTDIR=/wine-root && \
+    find /wine-root -type f \( -name '*.so*' -o -name 'wine*' \) -exec strip -s {} \; 2>/dev/null || true && \
+    rm -rf /wine-root/usr/share/man /wine-root/usr/share/doc /wine-root/usr/share/locale
 
 # Stage 2: Minimal runtime (only wine build output + tiny runtime deps)
 FROM --platform=linux/amd64 debian:bookworm-slim
