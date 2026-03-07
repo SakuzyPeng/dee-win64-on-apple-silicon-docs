@@ -25,6 +25,7 @@
 - `scripts/prune_fex_wine64_windows.sh`
 - `scripts/prune_fex_conservative.sh`
 - `scripts/prune_fex_medium.sh`
+- `scripts/prune_fex_aggressive.sh`
 
 ## 一次性准备
 
@@ -277,4 +278,35 @@ Run ID: `20260307_201544`
 
 ```bash
 ./scripts/prune_fex_medium.sh --rollback
+```
+
+### 7) RootFS 激进档裁剪（已验证）
+
+```bash
+./scripts/prune_fex_aggressive.sh --apply
+```
+
+策略：
+
+1. 清理 `LLVM/mesa/vulkan` 大体积库。
+2. 清理 `dri` 驱动与 `mesa-demos/vulkan` share 数据。
+3. 全部采用“移动到备份目录”方式，可回滚。
+
+结果：
+
+1. 在中等档基础上，RootFS 从 `915500 KB` 降至 `587096 KB`，再回收约 `328404 KB`。
+2. 三项回归通过：`--help`、`--print-stages`、`ADM -> EC3` 编码均 `exit 0`。
+3. 基线（Run ID: `20260307_230013`）：
+   - `help_cold`: `8.477s`
+   - `help_warm`: `2.220s`
+   - `encode_adm_to_ec3`: `18.283s`
+
+说明：
+
+1. 功能可用，但性能相对中等档有轻微回退（约 `0.08s` 量级）。
+
+回滚：
+
+```bash
+./scripts/prune_fex_aggressive.sh --rollback
 ```
