@@ -13,6 +13,7 @@ Note: the `FEX` container track is used to reduce dependency on `Rosetta 2` and 
 ## Container Quick Start (GHCR)
 
 > GitHub Packages renders the repository README; use the image-specific entry points below.
+> Compatibility note (global): validated with a Dolby Media Encoder (GUI) built-in CLI subset (`dee_ddpjoc_encoder.exe`, `dee_ddp_encoder.exe`, `dee_convert_sample_rate.exe`, `mp4muxer.exe`, `mp4demuxer.exe`) across Box64/FEX/Rosetta2 containers and non-container `wine64`; this is not a claim that all Dolby Media Encoder tools are fully verified.
 
 ### 1) FEX track (reduce dependency on Rosetta 2)
 
@@ -39,7 +40,6 @@ Note: the `FEX` container track is used to reduce dependency on `Rosetta 2` and 
   IMAGE_TAG=ghcr.io/sakuzypeng/dee-box64-lab:latest ./scripts/run_dee_with_box64.sh --help
   ```
 - Guide: [DEE_Docker_Box64_Experiment.en.md](./DEE_Docker_Box64_Experiment.en.md)
-- Compatibility note: also validated with Dolby Media Encoder (GUI) built-in CLI tools (for example `dee_ddpjoc_encoder.exe` and `mp4muxer.exe`); this repository does not distribute Dolby binaries/license payloads.
 - Rollback-safe tags: `full-latest`, `slim-latest` (`latest` always points to the most recently fully accepted build)
 
 ### 3) Rosetta 2 track (non-FEX compatibility path)
