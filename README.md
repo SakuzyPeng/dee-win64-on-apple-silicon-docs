@@ -62,28 +62,28 @@ English README: [README.en.md](./README.en.md)
 - 新增快捷脚本：
   - `scripts/run_dme_ddpjoc.sh`
   - `scripts/run_dme_ddp.sh`
-  - `scripts/run_dme_mux.sh`
+  - `scripts/run_mp4muxer.sh`
 - 模式切换：`DME_MODE=box64|fex|host`（默认 `box64`）
 - 可选 alias（本机）：
   ```bash
   alias dme-joc='./scripts/run_dme_ddpjoc.sh'
   alias dme-ddp='./scripts/run_dme_ddp.sh'
-  alias dme-mux='./scripts/run_dme_mux.sh'
+  alias mp4muxer='./scripts/run_mp4muxer.sh'
   ```
 - 示例：
   ```bash
   DME_MODE=box64 dme-joc --help
-  DME_MODE=fex dme-mux --help
+  DME_MODE=fex mp4muxer --help
   DME_MODE=host dme-ddp --help
   ```
 - `mp4muxer` 原生替换（便于后续自编译版本）：
   ```bash
   MP4MUXER_NATIVE_BIN=/path/to/native/mp4muxer \
-  DME_MODE=box64 dme-mux --help
+  DME_MODE=box64 mp4muxer --help
   ```
   `MP4MUXER_NATIVE_BIN` 启用时，会自动把 `y:/...` 或 `z:/workspace/...` 参数转换为宿主机路径。
-- 默认行为：若存在 `../upstream/dlb_mp4base/make/mp4muxer/macos/mp4muxer_release`，`dme-mux` 会自动优先使用原生二进制。
-- 关闭自动优先：`AUTO_NATIVE_MP4MUXER=0 DME_MODE=box64 dme-mux ...`
+- 默认行为：若存在 `../upstream/dlb_mp4base/make/mp4muxer/macos/mp4muxer_release`，`mp4muxer` 会自动优先使用原生二进制。
+- 关闭自动优先：`AUTO_NATIVE_MP4MUXER=0 DME_MODE=box64 mp4muxer ...`
 
 ## 文档入口
 

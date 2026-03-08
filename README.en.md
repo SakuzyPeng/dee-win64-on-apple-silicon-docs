@@ -64,28 +64,28 @@ Note: the `FEX` container track is used to reduce dependency on `Rosetta 2` and 
 - New convenience wrappers:
   - `scripts/run_dme_ddpjoc.sh`
   - `scripts/run_dme_ddp.sh`
-  - `scripts/run_dme_mux.sh`
+  - `scripts/run_mp4muxer.sh`
 - Mode switch: `DME_MODE=box64|fex|host` (default: `box64`)
 - Optional local aliases:
   ```bash
   alias dme-joc='./scripts/run_dme_ddpjoc.sh'
   alias dme-ddp='./scripts/run_dme_ddp.sh'
-  alias dme-mux='./scripts/run_dme_mux.sh'
+  alias mp4muxer='./scripts/run_mp4muxer.sh'
   ```
 - Examples:
   ```bash
   DME_MODE=box64 dme-joc --help
-  DME_MODE=fex dme-mux --help
+  DME_MODE=fex mp4muxer --help
   DME_MODE=host dme-ddp --help
   ```
 - Native `mp4muxer` override (for future self-compiled builds):
   ```bash
   MP4MUXER_NATIVE_BIN=/path/to/native/mp4muxer \
-  DME_MODE=box64 dme-mux --help
+  DME_MODE=box64 mp4muxer --help
   ```
   When `MP4MUXER_NATIVE_BIN` is set, `y:/...` and `z:/workspace/...` arguments are auto-converted to host paths.
-- Default behavior: if `../upstream/dlb_mp4base/make/mp4muxer/macos/mp4muxer_release` exists, `dme-mux` auto-prefers the native binary.
-- Disable auto-prefer: `AUTO_NATIVE_MP4MUXER=0 DME_MODE=box64 dme-mux ...`
+- Default behavior: if `../upstream/dlb_mp4base/make/mp4muxer/macos/mp4muxer_release` exists, `mp4muxer` auto-prefers the native binary.
+- Disable auto-prefer: `AUTO_NATIVE_MP4MUXER=0 DME_MODE=box64 mp4muxer ...`
 
 ## Documentation
 
