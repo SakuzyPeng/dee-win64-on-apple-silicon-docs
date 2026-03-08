@@ -7,6 +7,7 @@ DME_MODE="${DME_MODE:-box64}"
 DME_DIR="${DME_DIR:-$ROOT_DIR/dme_encoder}"
 TOOL_NAME=""
 MP4MUXER_NATIVE_BIN="${MP4MUXER_NATIVE_BIN:-}"
+AUTO_NATIVE_MP4MUXER="${AUTO_NATIVE_MP4MUXER:-1}"
 
 IMAGE_TAG_BOX64="${IMAGE_TAG_BOX64:-dee-box64-lab:local}"
 IMAGE_TAG_FEX="${IMAGE_TAG_FEX:-dee-fex-lab:local}"
@@ -106,9 +107,22 @@ prepare_dirs_from_args() {
 run_native_mp4muxer_if_configured() {
   local args=("$@")
   local converted=()
+  local translated=()
   local idx=0
+  local auto_candidate=""
 
-  if [[ "$TOOL_NAME" != "mp4muxer.exe" || -z "$MP4MUXER_NATIVE_BIN" ]]; then
+  if [[ "$TOOL_NAME" != "mp4muxer.exe" ]]; then
+    return 1
+  fi
+
+  if [[ -z "$MP4MUXER_NATIVE_BIN" && "$AUTO_NATIVE_MP4MUXER" != "0" ]]; then
+    auto_candidate="$ROOT_DIR/../upstream/dlb_mp4base/make/mp4muxer/macos/mp4muxer_release"
+    if [[ -x "$auto_candidate" ]]; then
+      MP4MUXER_NATIVE_BIN="$auto_candidate"
+    fi
+  fi
+
+  if [[ -z "$MP4MUXER_NATIVE_BIN" ]]; then
     return 1
   fi
 
@@ -122,8 +136,24 @@ run_native_mp4muxer_if_configured() {
     idx=$((idx + 1))
   done
 
-  prepare_dirs_from_args "${converted[@]}"
-  exec "$MP4MUXER_NATIVE_BIN" "${converted[@]}"
+  idx=0
+  while (( idx < ${#converted[@]} )); do
+    case "${converted[$idx]}" in
+      --input-format)
+        # Native dlb_mp4base mp4muxer infers stream type from extension
+        # and does not accept Windows-style --input-format.
+        idx=$((idx + 2))
+        continue
+        ;;
+      *)
+        translated+=("${converted[$idx]}")
+        ;;
+    esac
+    idx=$((idx + 1))
+  done
+
+  prepare_dirs_from_args "${translated[@]}"
+  exec "$MP4MUXER_NATIVE_BIN" "${translated[@]}"
 }
 
 run_native_mp4muxer_if_configured "$@" || true

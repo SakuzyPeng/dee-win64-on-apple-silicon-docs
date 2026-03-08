@@ -82,6 +82,8 @@ English README: [README.en.md](./README.en.md)
   DME_MODE=box64 dme-mux --help
   ```
   `MP4MUXER_NATIVE_BIN` 启用时，会自动把 `y:/...` 或 `z:/workspace/...` 参数转换为宿主机路径。
+- 默认行为：若存在 `../upstream/dlb_mp4base/make/mp4muxer/macos/mp4muxer_release`，`dme-mux` 会自动优先使用原生二进制。
+- 关闭自动优先：`AUTO_NATIVE_MP4MUXER=0 DME_MODE=box64 dme-mux ...`
 
 ## 文档入口
 

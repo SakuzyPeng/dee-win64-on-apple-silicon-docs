@@ -84,6 +84,8 @@ Note: the `FEX` container track is used to reduce dependency on `Rosetta 2` and 
   DME_MODE=box64 dme-mux --help
   ```
   When `MP4MUXER_NATIVE_BIN` is set, `y:/...` and `z:/workspace/...` arguments are auto-converted to host paths.
+- Default behavior: if `../upstream/dlb_mp4base/make/mp4muxer/macos/mp4muxer_release` exists, `dme-mux` auto-prefers the native binary.
+- Disable auto-prefer: `AUTO_NATIVE_MP4MUXER=0 DME_MODE=box64 dme-mux ...`
 
 ## Documentation
 
