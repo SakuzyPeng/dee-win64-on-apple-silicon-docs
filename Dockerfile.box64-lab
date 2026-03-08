@@ -24,6 +24,7 @@ RUN cmake -S /src/box64 -B /src/box64/build -G Ninja \
 # Path A image: linux/arm64 base + modern box64 + amd64 Wine (multiarch).
 FROM --platform=linux/arm64 ubuntu:24.04
 LABEL org.opencontainers.image.source="https://github.com/SakuzyPeng/dee-win64-on-apple-silicon-docs"
+ARG PRUNE_PROFILE=conservative
 ENV DEBIAN_FRONTEND=noninteractive
 
 RUN sed -i '/^Signed-By:/a Architectures: arm64' /etc/apt/sources.list.d/ubuntu.sources && \
@@ -43,30 +44,50 @@ RUN sed -i '/^Signed-By:/a Architectures: arm64' /etc/apt/sources.list.d/ubuntu.
       'Signed-By: /usr/share/keyrings/ubuntu-archive-keyring.gpg' \
       > /etc/apt/sources.list.d/ubuntu-amd64.sources
 
+RUN case "$PRUNE_PROFILE" in \
+      conservative|medium|aggressive) ;; \
+      *) echo "Unsupported PRUNE_PROFILE: $PRUNE_PROFILE" >&2; exit 2 ;; \
+    esac
+
 RUN dpkg --add-architecture amd64 && \
     apt-get update && \
+    case "$PRUNE_PROFILE" in \
+      conservative) \
+        ARM64_DEPS='libfreetype6 libpng16-16 libfontconfig1 libexpat1 libglib2.0-0 libgstreamer1.0-0 libgstreamer-plugins-base1.0-0 libcups2 libsdl2-2.0-0 libusb-1.0-0'; \
+        AMD64_DEPS='libc6:amd64 libfreetype6:amd64 libxml2:amd64 zlib1g:amd64 libgnutls30:amd64'; \
+        ;; \
+      medium) \
+        ARM64_DEPS='libfreetype6 libfontconfig1 libexpat1 libbrotli1'; \
+        AMD64_DEPS='libc6:amd64 libfreetype6:amd64 libxml2:amd64 zlib1g:amd64'; \
+        ;; \
+      aggressive) \
+        ARM64_DEPS='libfreetype6 libfontconfig1 libexpat1 libbrotli1'; \
+        AMD64_DEPS='libc6:amd64 libfreetype6:amd64 libxml2:amd64 zlib1g:amd64'; \
+        ;; \
+    esac && \
     apt-get install -y --no-install-recommends \
       ca-certificates \
-      libfreetype6 \
-      libpng16-16 \
-      libfontconfig1 \
-      libexpat1 \
-      libglib2.0-0 \
-      libgstreamer1.0-0 \
-      libgstreamer-plugins-base1.0-0 \
-      libcups2 \
-      libsdl2-2.0-0 \
-      libusb-1.0-0 \
       wine64:amd64 \
-      libc6:amd64 \
-      libfreetype6:amd64 \
-      libxml2:amd64 \
-      zlib1g:amd64 \
-      libgnutls30:amd64 \
+      $ARM64_DEPS \
+      $AMD64_DEPS \
     && rm -rf /var/lib/apt/lists/*
 
 COPY --from=box64_builder /usr/local /usr/local
-RUN ldconfig
+RUN ldconfig && \
+    mkdir -p /opt/box64-prune && \
+    printf 'PRUNE_PROFILE=%s\n' "$PRUNE_PROFILE" > /opt/box64-prune/profile.env && \
+    dpkg-query -W > /opt/box64-prune/packages.after.txt && \
+    printf 'profile=%s\n' "$PRUNE_PROFILE" > /opt/box64-prune/prune-manifest.txt
+
+RUN if [ "$PRUNE_PROFILE" = "medium" ] || [ "$PRUNE_PROFILE" = "aggressive" ]; then \
+      rm -rf /usr/share/doc/* /usr/share/man/* /usr/share/info/*; \
+      printf '%s\n' 'removed=/usr/share/doc,/usr/share/man,/usr/share/info' >> /opt/box64-prune/prune-manifest.txt; \
+    fi && \
+    if [ "$PRUNE_PROFILE" = "aggressive" ]; then \
+      rm -rf /usr/share/locale/* /usr/share/icons/* /usr/share/applications/* /usr/share/bash-completion/*; \
+      find /usr/lib /lib -type f -name '*.a' -delete || true; \
+      printf '%s\n' 'removed=/usr/share/locale,/usr/share/icons,/usr/share/applications,/usr/share/bash-completion,*.a' >> /opt/box64-prune/prune-manifest.txt; \
+    fi
 
 # Basic sanity checks at build time.
 RUN command -v box64

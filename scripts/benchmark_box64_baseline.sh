@@ -4,6 +4,7 @@ set -euo pipefail
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 
 RUNS="${RUNS:-3}" # repeat count for statistics
+IMAGE_TAG="${IMAGE_TAG:-dee-box64-lab:local}"
 BOX64_STATE_DIR="${BOX64_STATE_DIR:-$ROOT_DIR/tmp_box64_state_bench}"
 XML_TEMPLATE_REL="dolby_encoding_engine/xml_templates/encode_to_atmos_ddp/music/album_encode_to_atmos_ddp_ec3.test.xml"
 
@@ -13,9 +14,16 @@ RUN_DIR="$BENCH_ROOT/$RUN_ID"
 RESULTS_TSV="$RUN_DIR/results.tsv"
 AGGREGATE_TSV="$RUN_DIR/aggregate.tsv"
 SUMMARY_MD="$RUN_DIR/summary.md"
+SIZE_REPORT_DIR="$RUN_DIR/size-report"
 
 mkdir -p "$RUN_DIR" "$BENCH_ROOT/box64/tmp"
 printf "run\tmode\tcase\texit\treal_s\tuser_s\tsys_s\tdee_job_s\tstdout_log\ttime_log\n" > "$RESULTS_TSV"
+
+if [[ -x "$ROOT_DIR/scripts/report_box64_image_size.sh" ]]; then
+  "$ROOT_DIR/scripts/report_box64_image_size.sh" \
+    --image "$IMAGE_TAG" \
+    --out-dir "$SIZE_REPORT_DIR" >/dev/null
+fi
 
 add_result() {
   local run_idx="$1"
@@ -87,15 +95,15 @@ run_box64() {
   fi
 
   run_case "$run_idx" "help_cold" \
-    "cd '$ROOT_DIR' && rm -rf '$BOX64_STATE_DIR/WinePrefixes/bench_box64' && STATE_DIR='$BOX64_STATE_DIR' WINEPREFIX='/state/WinePrefixes/bench_box64' '$ROOT_DIR/scripts/run_dee_with_box64.sh' --help" \
+    "cd '$ROOT_DIR' && rm -rf '$BOX64_STATE_DIR/WinePrefixes/bench_box64' && IMAGE_TAG='$IMAGE_TAG' STATE_DIR='$BOX64_STATE_DIR' WINEPREFIX='/state/WinePrefixes/bench_box64' '$ROOT_DIR/scripts/run_dee_with_box64.sh' --help" \
     "$iter_dir"
 
   run_case "$run_idx" "help_warm" \
-    "cd '$ROOT_DIR' && STATE_DIR='$BOX64_STATE_DIR' WINEPREFIX='/state/WinePrefixes/bench_box64' '$ROOT_DIR/scripts/run_dee_with_box64.sh' --help" \
+    "cd '$ROOT_DIR' && IMAGE_TAG='$IMAGE_TAG' STATE_DIR='$BOX64_STATE_DIR' WINEPREFIX='/state/WinePrefixes/bench_box64' '$ROOT_DIR/scripts/run_dee_with_box64.sh' --help" \
     "$iter_dir"
 
   run_case "$run_idx" "encode_adm_to_ec3" \
-    "cd '$ROOT_DIR' && STATE_DIR='$BOX64_STATE_DIR' WINEPREFIX='/state/WinePrefixes/bench_box64' '$ROOT_DIR/scripts/run_dee_with_box64.sh' --xml 'y:/$XML_TEMPLATE_REL' --input-audio 'y:/testADM.wav' --output 'y:/tmp_bench/box64/testADM_baseline.ec3' --temp 'y:/tmp_bench/box64/tmp' --log-file 'y:/tmp_bench/box64/dee_encode.log' --stdout --verbose info" \
+    "cd '$ROOT_DIR' && IMAGE_TAG='$IMAGE_TAG' STATE_DIR='$BOX64_STATE_DIR' WINEPREFIX='/state/WinePrefixes/bench_box64' '$ROOT_DIR/scripts/run_dee_with_box64.sh' --xml 'y:/$XML_TEMPLATE_REL' --input-audio 'y:/testADM.wav' --output 'y:/tmp_bench/box64/testADM_baseline.ec3' --temp 'y:/tmp_bench/box64/tmp' --log-file 'y:/tmp_bench/box64/dee_encode.log' --stdout --verbose info" \
     "$iter_dir"
 }
 
@@ -182,6 +190,7 @@ END {
   echo ""
   echo "- Run ID: \`$RUN_ID\`"
   echo "- Runs: \`$RUNS\`"
+  echo "- Image: \`$IMAGE_TAG\`"
   echo ""
   echo "## Aggregate"
   echo ""
@@ -191,6 +200,12 @@ END {
     echo "| $mode | $case_name | $runs | $success | $mean_real | $std_real | $min_real | $max_real | $mean_job |"
   done
   echo ""
+  if [[ -f "$SIZE_REPORT_DIR/size-report.md" ]]; then
+    echo "## Size Report"
+    echo ""
+    echo "- \`$SIZE_REPORT_DIR/size-report.md\`"
+    echo ""
+  fi
   echo "## Per-Run"
   echo ""
   echo "| run | mode | case | exit | real_s | user_s | sys_s | dee_job_s | stdout_log |"

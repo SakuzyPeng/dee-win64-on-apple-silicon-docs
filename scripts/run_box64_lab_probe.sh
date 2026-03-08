@@ -21,7 +21,22 @@ docker run --rm --platform linux/arm64 "$IMAGE_TAG" bash -lc '
   fi
   echo "BOX64_BIN=$box64_bin"
   echo "WINE_BIN=$wine_bin"
-  dpkg -l | grep -E "^ii\s+(wine64:amd64|libwine:amd64)\s" || true
+  if [[ -f /opt/box64-prune/profile.env ]]; then
+    prune_profile=""
+    while IFS= read -r line; do
+      case "$line" in
+        PRUNE_PROFILE=*)
+          prune_profile="${line#PRUNE_PROFILE=}"
+          ;;
+      esac
+    done < /opt/box64-prune/profile.env
+    echo "PRUNE_PROFILE=${prune_profile:-unknown}"
+  fi
+  if command -v dpkg >/dev/null 2>&1 && command -v grep >/dev/null 2>&1; then
+    dpkg -l | grep -E "^ii\s+(wine64:amd64|libwine:amd64)\s" || true
+  else
+    echo "Package probe skipped (dpkg/grep not available in this image)."
+  fi
 '
 
 echo "[2/2] Runtime probe in $IMAGE_TAG"

@@ -1,130 +1,111 @@
 # DEE Box64 Container Guide (ARM64)
 
-## Goal
-Add a third parallel `box64` container track on Apple Silicon for DEE CLI encoding workloads, maintained as a release-candidate path.
+## Scope
+- Goal: run `dee.exe` on Apple Silicon with `box64 + wine64:amd64`.
+- Position: third parallel track alongside FEX and Rosetta2.
+- Priority: stable `ADM -> EC3` first, performance tuning later.
+- Prune boundary: prune container runtime only, not the DEE payload.
 
-Positioning of `box64`:
-- Runs in parallel with `FEX` and `Rosetta 2` tracks
-- Prioritizes functional stability and portability before performance optimization
+## Prerequisites
+- Docker installed (with `linux/arm64` support).
+- Repository root contains:
+  - `dolby_encoding_engine/dee.exe`
+  - `dolby_encoding_engine/license.lic`
+  - `testADM.wav`
 
-## Track Definition
-### Path A (preferred target)
-- `linux/arm64` base image
-- `box64 + wine64:amd64` (multiarch)
-- Run `dee.exe` directly
-
-### Path B (fallback plan)
-- If Path A cannot pass `ADM -> EC3` acceptance within one iteration window
-- Switch to `amd64` userland RootFS + box64
-- No disruption to existing FEX/Rosetta2 flows
-
-> The repository currently runs Path A: build a modern `box64` inside the `linux/arm64` container and execute multiarch `wine64:amd64` directly.
-
-## Path A Recovery Log (historical blocker -> current status)
-- Date: 2026-03-08
-- Path A observed blockers:
-  - `wine: could not load kernel32.dll, status c0000135`
-  - high noise from `nodrv_CreateWindow` / `explorer.exe /desktop` in headless runs
-  - insufficient startup stability for `--help/--print-stages` under cold/parallel conditions
-- Fix: upgrade from the old distro `box64` package to a modern source-built `box64`; Path A now passes `--help/--print-stages/ADM->EC3/5x stability` acceptance.
-- Outcome: keep Path B as emergency fallback, but default release target is Path A again.
-
-## Key Scripts
-- `scripts/build_box64_lab.sh`
-- `scripts/run_box64_lab_probe.sh`
-- `scripts/run_dee_with_box64.sh`
-- `scripts/benchmark_box64_baseline.sh`
-- `scripts/acceptance_box64_candidate.sh`
-
-## One-Time Setup
-1. Build the lab image
+## Quick Start (full image)
+1. Build:
 ```bash
-./scripts/build_box64_lab.sh
+./scripts/build_box64_lab.sh --profile aggressive
 ```
-
-2. Probe box64/wine runtime basics
+2. Probe:
 ```bash
-./scripts/run_box64_lab_probe.sh
+IMAGE_TAG=dee-box64-lab:local ./scripts/run_box64_lab_probe.sh
 ```
-
-## Daily Use
-CLI smoke:
+3. Smoke:
 ```bash
-./scripts/run_dee_with_box64.sh --help
+IMAGE_TAG=dee-box64-lab:local ./scripts/run_dee_with_box64.sh --help
+IMAGE_TAG=dee-box64-lab:local ./scripts/run_dee_with_box64.sh --print-stages
 ```
-
-`print-stages`:
+4. Real encode (ADM -> EC3):
 ```bash
-./scripts/run_dee_with_box64.sh \
-  --print-stages \
-  -l y:/dolby_encoding_engine/license.lic
-```
-
-ADM sample encode:
-```bash
-./scripts/run_dee_with_box64.sh \
+IMAGE_TAG=dee-box64-lab:local ./scripts/run_dee_with_box64.sh \
   --xml y:/dolby_encoding_engine/xml_templates/encode_to_atmos_ddp/music/album_encode_to_atmos_ddp_ec3.test.xml \
   --input-audio y:/testADM.wav \
   --output y:/tmp_box64_acceptance/manual/testADM.ec3 \
   --temp y:/tmp_box64_acceptance/manual/tmp \
   --log-file y:/tmp_box64_acceptance/manual/dee.log \
   -l y:/dolby_encoding_engine/license.lic \
-  --stdout \
-  --verbose info
+  --stdout --verbose info
 ```
 
-## Runtime Conventions
-`run_dee_with_box64.sh` already handles:
-- `WINEPREFIX` initialization
-- drive mapping
-- `c:` -> `../drive_c`
-- `z:` -> `/`
-- `y:` -> `/workspace`
-- one-time `wineboot -u`
-- auto-create host directories for `y:/...` `--temp/--log-file/--output`
-
-Default state directory:
-- `tmp_box64_state/` (rebuildable)
-
-## Acceptance Gate (for release promotion)
-1. Smoke:
+## Aggressive Pruning (slim image)
+1. Generate runtime allowlist (recommended: `encode` mode):
 ```bash
-./scripts/run_dee_with_box64.sh --help
-./scripts/run_dee_with_box64.sh --print-stages -l y:/dolby_encoding_engine/license.lic
+./scripts/generate_box64_runtime_allowlist.sh \
+  --image dee-box64-lab:local \
+  --mode encode \
+  --out-dir tmp_box64_prune/allowlist
 ```
-
-2. Real encode: `ADM -> EC3` succeeds, output and log files exist, exit code `0`
-
-3. Stability: same encode command succeeds 5/5 times
+2. Build slim:
 ```bash
-./scripts/acceptance_box64_candidate.sh
+./scripts/build_box64_allowlist_slim.sh \
+  --source-image dee-box64-lab:local \
+  --target-image dee-box64-lab:slim-local \
+  --allowlist tmp_box64_prune/allowlist/runtime-allowlist.txt
 ```
+3. Run slim smoke/encode by changing `IMAGE_TAG` to `dee-box64-lab:slim-local`.
 
-4. Baseline capture (no performance gate in this phase):
+Stability guardrail:
+- slim keeps full Wine runtime directories:
+  - `/usr/lib/wine`
+  - `/usr/lib/x86_64-linux-gnu/wine`
+  - `/usr/share/wine`
+- everything else is allowlist-pruned to avoid regressions from missing critical DLL/EXE assets.
+
+One-shot flow (aggressive + allowlist + slim):
 ```bash
-./scripts/benchmark_box64_baseline.sh
+./scripts/build_box64_lab.sh \
+  --profile aggressive \
+  --generate-allowlist \
+  --allowlist-mode encode \
+  --build-slim \
+  --slim-tag dee-box64-lab:slim-local
 ```
 
-## GHCR Publishing Policy
-Image name:
-- `ghcr.io/sakuzypeng/dee-box64-lab`
-
-Tag policy:
-- candidate: `candidate-YYYYMMDD-HHMMSS`
-- dated: `vYYYY.MM.DD`
-- stable: `latest` (promote only after full acceptance)
-
-Example:
+## Acceptance Checklist
+- Smoke: `--help` and `--print-stages` return `0`.
+- Real encode: `ADM WAV -> Atmos DDP EC3` succeeds with output and log files present.
+- Stability: same command succeeds `5/5`.
 ```bash
-docker tag dee-box64-lab:local ghcr.io/sakuzypeng/dee-box64-lab:candidate-$(date +%Y%m%d-%H%M%S)
-docker tag dee-box64-lab:local ghcr.io/sakuzypeng/dee-box64-lab:v$(date +%Y.%m.%d)
-docker push ghcr.io/sakuzypeng/dee-box64-lab:candidate-$(date +%Y%m%d-%H%M%S)
-docker push ghcr.io/sakuzypeng/dee-box64-lab:v$(date +%Y.%m.%d)
-# Promote latest only after acceptance passes
+IMAGE_TAG=dee-box64-lab:slim-local ./scripts/acceptance_box64_candidate.sh
 ```
+- Baseline (compatible with existing output format):
+```bash
+IMAGE_TAG=dee-box64-lab:slim-local ./scripts/benchmark_box64_baseline.sh
+```
+- Size report:
+```bash
+./scripts/report_box64_image_size.sh --image dee-box64-lab:slim-local
+```
+
+## Release and Rollback
+Image: `ghcr.io/sakuzypeng/dee-box64-lab`
+
+Recommended tags:
+- `full-candidate-YYYYMMDD-HHMMSS`
+- `slim-candidate-YYYYMMDD-HHMMSS`
+- `vYYYY.MM.DD`
+- `full-latest`
+- `slim-latest`
+- `latest` (promote only after full acceptance)
+
+Rules:
+- `latest` must point to fully accepted builds only.
+- If slim fails acceptance, publish full candidate only with blocker notes.
+- Keep both full/slim entry tags for safe rollback.
 
 ## Common Notes
-1. The current image builds modern `box64` from source inside the container and installs multiarch `wine64:amd64`.
-2. `nodrv_CreateWindow`-style logs are usually harmless for headless CLI runs.
-3. DEE requires `--temp` to exist; the wrapper auto-creates host directories for `y:/...`.
-4. If storage gets tight, clean `tmp_box64_state*` and old benchmark output directories.
+1. `nodrv_CreateWindow` in headless mode is usually non-fatal noise.
+2. DEE requires `--temp` to exist; wrapper scripts auto-create host dirs for `y:/...`.
+3. If storage is tight, clean `tmp_box64_state*`, `tmp_box64_prune/`, and `tmp_bench/`.
