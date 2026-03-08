@@ -115,16 +115,14 @@ Baseline update rule:
 Image: `ghcr.io/sakuzypeng/dee-box64-lab`
 
 Recommended tags:
-- `full-candidate-YYYYMMDD-HHMMSS`
-- `slim-candidate-YYYYMMDD-HHMMSS`
 - `vYYYY.MM.DD`
 - `full-latest`
 - `slim-latest`
-- `latest` (promote only after full acceptance)
+- `latest` (current stable release entry)
 
 Rules:
 - `latest` must point to fully accepted builds only.
-- If slim fails acceptance, publish full candidate only with blocker notes.
+- If slim fails acceptance, update `full-latest` only with blocker notes and keep `latest` unchanged.
 - Keep both full/slim entry tags for safe rollback.
 
 ## Common Notes

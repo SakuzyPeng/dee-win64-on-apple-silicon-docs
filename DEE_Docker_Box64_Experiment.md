@@ -115,16 +115,14 @@ IMAGE_TAG=dee-box64-lab:slim-local ./scripts/benchmark_box64_baseline.sh
 镜像：`ghcr.io/sakuzypeng/dee-box64-lab`
 
 建议标签：
-- `full-candidate-YYYYMMDD-HHMMSS`
-- `slim-candidate-YYYYMMDD-HHMMSS`
 - `vYYYY.MM.DD`
 - `full-latest`
 - `slim-latest`
-- `latest`（仅验收通过后更新）
+- `latest`（当前稳定发布入口）
 
 规则：
 - `latest` 仅指向通过完整验收的版本。
-- 若 slim 未通过，仅发布 full 候选并附阻塞说明。
+- 若 slim 未通过，仅更新 `full-latest` 并附阻塞说明，`latest` 保持不变。
 - 始终保留 full/slim 双入口，确保可回退。
 
 ## 常见问题

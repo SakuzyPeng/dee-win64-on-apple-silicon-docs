@@ -27,19 +27,19 @@ Note: the `FEX` container track is used to reduce dependency on `Rosetta 2` and 
   ```
 - Guide: [DEE_Docker_FEX_Experiment.en.md](./DEE_Docker_FEX_Experiment.en.md)
 
-### 2) Box64 track (parallel third path, release candidate)
+### 2) Box64 track (parallel third path, stable release)
 
-- Image: `ghcr.io/sakuzypeng/dee-box64-lab:slim-latest`
+- Image: `ghcr.io/sakuzypeng/dee-box64-lab:latest`
 - Pull:
   ```bash
-  docker pull ghcr.io/sakuzypeng/dee-box64-lab:slim-latest
+  docker pull ghcr.io/sakuzypeng/dee-box64-lab:latest
   ```
 - Quick smoke test:
   ```bash
-  IMAGE_TAG=ghcr.io/sakuzypeng/dee-box64-lab:slim-latest ./scripts/run_dee_with_box64.sh --help
+  IMAGE_TAG=ghcr.io/sakuzypeng/dee-box64-lab:latest ./scripts/run_dee_with_box64.sh --help
   ```
 - Guide: [DEE_Docker_Box64_Experiment.en.md](./DEE_Docker_Box64_Experiment.en.md)
-- Rollback-safe tags: `full-latest`, `slim-latest` (`latest` is promoted only after full acceptance)
+- Rollback-safe tags: `full-latest`, `slim-latest` (`latest` always points to the most recently fully accepted build)
 
 ### 3) Rosetta 2 track (non-FEX compatibility path)
 
