@@ -13,20 +13,21 @@
 - `box64 + wine64:amd64`（multiarch）
 - 直接运行 `dee.exe`
 
-### 路径 B（回退实现）
+### 路径 B（回退预案）
 - 若路径 A 在一个迭代窗口内无法通过 `ADM -> EC3` 验收
 - 切换到 `amd64` 用户态 RootFS + box64
 - 不影响现有 FEX/Rosetta2 路线与发布
 
-> 当前仓库已执行时间盒回退，实际实现为路径 B：复用 `ghcr.io/sakuzypeng/dee-wine-minimal:legacy-rosetta2-latest` 的 `amd64` Wine 用户态，再由 `box64` 在 `linux/arm64` 容器内运行。
+> 当前仓库实现为路径 A：在 `linux/arm64` 容器中自编译新版 `box64`，并使用 multiarch 的 `wine64:amd64` 直接运行 `dee.exe`。
 
-## 时间盒决策记录（A -> B）
+## 路径 A 修复记录（历史阻塞 -> 当前可用）
 - 时间：2026-03-08
 - 路径 A 观测到的阻塞现象：
   - `wine: could not load kernel32.dll, status c0000135`
   - 无头环境出现大量 `nodrv_CreateWindow` / `explorer.exe /desktop` 异常噪声
   - `--help/--print-stages` 在并发或冷启动条件下稳定性不足
-- 决策：切换到路径 B，先满足“可发布候选 + 功能稳定”目标；路径 A 后续作为性能探索分支独立推进。
+- 处理：将容器内 `box64` 从旧版仓库包升级为新版源码构建版本后，路径 A 恢复通过 `--help/--print-stages/ADM->EC3/5x稳定性` 验收。
+- 结论：路径 B 继续保留为应急回退，但默认发布目标回到路径 A。
 
 ## 关键脚本
 - `scripts/build_box64_lab.sh`
@@ -123,7 +124,7 @@ docker push ghcr.io/sakuzypeng/dee-box64-lab:v$(date +%Y.%m.%d)
 ```
 
 ## 常见问题
-1. 当前镜像复用了 `dee-wine-minimal` 的 `amd64` Wine 用户态，并在 `linux/arm64` 层安装 `box64` 与必要运行库。
+1. 当前镜像在容器内自编译新版 `box64`，并使用 multiarch 安装 `wine64:amd64`。
 2. 无 GUI 场景出现 `nodrv_CreateWindow` 类日志通常可忽略。
 3. DEE 要求 `--temp` 目录存在；脚本已自动创建 `y:/...` 对应宿主目录。
 4. 如遇空间不足，优先清理 `tmp_box64_state*` 与历史基准目录。

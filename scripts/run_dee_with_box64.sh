@@ -9,8 +9,8 @@ STATE_DIR="${STATE_DIR:-$ROOT_DIR/tmp_box64_state}"
 WINEPREFIX="${WINEPREFIX:-/state/WinePrefixes/dee}"
 WINEARCH="${WINEARCH:-win64}"
 WINEBOOT_TIMEOUT="${WINEBOOT_TIMEOUT:-120}"
-BOX64_BIN="${BOX64_BIN:-/usr/bin/box64}"
-WINE_BIN="${WINE_BIN:-/usr/bin/wine64}"
+BOX64_BIN="${BOX64_BIN:-/usr/local/bin/box64}"
+WINE_BIN="${WINE_BIN:-/usr/lib/wine/wine64}"
 DEE_WIN_EXE="${DEE_WIN_EXE:-y:/dolby_encoding_engine/dee.exe}"
 
 win_to_workspace_path() {
@@ -85,13 +85,23 @@ docker run --rm --platform linux/arm64 \
     export BOX64_NOBANNER=1
     export WINEDEBUG=fixme-all
 
-    test -x '$BOX64_BIN'
+    if [[ -x '$BOX64_BIN' ]]; then
+      box64_bin='$BOX64_BIN'
+    elif [[ -x /usr/local/bin/box64 ]]; then
+      box64_bin=/usr/local/bin/box64
+    elif [[ -x /usr/bin/box64 ]]; then
+      box64_bin=/usr/bin/box64
+    else
+      echo 'box64 binary not found in container' >&2
+      exit 127
+    fi
+
     if [[ -x '$WINE_BIN' ]]; then
       wine_bin='$WINE_BIN'
-    elif [[ -x /usr/bin/wine64 ]]; then
-      wine_bin=/usr/bin/wine64
     elif [[ -x /usr/lib/wine/wine64 ]]; then
       wine_bin=/usr/lib/wine/wine64
+    elif [[ -x /usr/bin/wine64 ]]; then
+      wine_bin=/usr/bin/wine64
     else
       echo 'wine64 binary not found in container' >&2
       exit 127
@@ -103,9 +113,9 @@ docker run --rm --platform linux/arm64 \
     ln -sfn /workspace \"\$WINEPREFIX/dosdevices/y:\"
 
     if [[ ! -f \"\$WINEPREFIX/.dee_box64_ready\" ]]; then
-      timeout '$WINEBOOT_TIMEOUT' '$BOX64_BIN' \"\$wine_bin\" wineboot.exe -u >/dev/null 2>&1 || true
+      timeout '$WINEBOOT_TIMEOUT' \"\$box64_bin\" \"\$wine_bin\" wineboot.exe -u >/dev/null 2>&1 || true
       touch \"\$WINEPREFIX/.dee_box64_ready\"
     fi
 
-    '$BOX64_BIN' \"\$wine_bin\" '$DEE_WIN_EXE' $ARGS_Q
+    \"\$box64_bin\" \"\$wine_bin\" '$DEE_WIN_EXE' $ARGS_Q
   "

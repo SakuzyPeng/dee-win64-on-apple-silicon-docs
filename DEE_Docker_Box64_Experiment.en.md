@@ -13,20 +13,21 @@ Positioning of `box64`:
 - `box64 + wine64:amd64` (multiarch)
 - Run `dee.exe` directly
 
-### Path B (implemented fallback)
+### Path B (fallback plan)
 - If Path A cannot pass `ADM -> EC3` acceptance within one iteration window
 - Switch to `amd64` userland RootFS + box64
 - No disruption to existing FEX/Rosetta2 flows
 
-> The repository has already executed the timeboxed fallback and currently runs Path B: reuse `amd64` Wine userland from `ghcr.io/sakuzypeng/dee-wine-minimal:legacy-rosetta2-latest`, then execute via `box64` inside a `linux/arm64` container.
+> The repository currently runs Path A: build a modern `box64` inside the `linux/arm64` container and execute multiarch `wine64:amd64` directly.
 
-## Timeboxed Decision Log (A -> B)
+## Path A Recovery Log (historical blocker -> current status)
 - Date: 2026-03-08
 - Path A observed blockers:
   - `wine: could not load kernel32.dll, status c0000135`
   - high noise from `nodrv_CreateWindow` / `explorer.exe /desktop` in headless runs
   - insufficient startup stability for `--help/--print-stages` under cold/parallel conditions
-- Decision: switch to Path B to satisfy the release-candidate goal (functional stability first); keep Path A as a separate future performance branch.
+- Fix: upgrade from the old distro `box64` package to a modern source-built `box64`; Path A now passes `--help/--print-stages/ADM->EC3/5x stability` acceptance.
+- Outcome: keep Path B as emergency fallback, but default release target is Path A again.
 
 ## Key Scripts
 - `scripts/build_box64_lab.sh`
@@ -123,7 +124,7 @@ docker push ghcr.io/sakuzypeng/dee-box64-lab:v$(date +%Y.%m.%d)
 ```
 
 ## Common Notes
-1. The current image reuses `amd64` Wine userland from `dee-wine-minimal`, then installs `box64` plus required runtime libs on `linux/arm64`.
+1. The current image builds modern `box64` from source inside the container and installs multiarch `wine64:amd64`.
 2. `nodrv_CreateWindow`-style logs are usually harmless for headless CLI runs.
 3. DEE requires `--temp` to exist; the wrapper auto-creates host directories for `y:/...`.
 4. If storage gets tight, clean `tmp_box64_state*` and old benchmark output directories.

@@ -1,16 +1,31 @@
 # syntax=docker/dockerfile:1.7
 
-# Reuse proven amd64 minimal-wine userspace, then run it under box64 on arm64.
-FROM --platform=linux/amd64 ghcr.io/sakuzypeng/dee-wine-minimal:legacy-rosetta2-latest AS wine_amd64
+# Build a modern box64 from source (Ubuntu repo 0.2.6 is too old for this workload).
+FROM --platform=linux/arm64 ubuntu:24.04 AS box64_builder
+ENV DEBIAN_FRONTEND=noninteractive
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
+      ca-certificates \
+      git \
+      build-essential \
+      cmake \
+      ninja-build \
+      pkg-config \
+      python3 \
+    && rm -rf /var/lib/apt/lists/*
+RUN git clone --depth 1 https://github.com/ptitSeb/box64 /src/box64
+RUN cmake -S /src/box64 -B /src/box64/build -G Ninja \
+      -DCMAKE_BUILD_TYPE=RelWithDebInfo \
+      -DCMAKE_INSTALL_PREFIX=/usr/local \
+      -DARM_DYNAREC=ON && \
+    cmake --build /src/box64/build -j"$(nproc)" && \
+    cmake --install /src/box64/build
 
-# Experimental ARM64 lab image for Box64 + amd64 Wine integration checks.
+# Path A image: linux/arm64 base + modern box64 + amd64 Wine (multiarch).
 FROM --platform=linux/arm64 ubuntu:24.04
 LABEL org.opencontainers.image.source="https://github.com/SakuzyPeng/dee-win64-on-apple-silicon-docs"
-
 ENV DEBIAN_FRONTEND=noninteractive
 
-# Ubuntu arm64 containers point to ports.ubuntu.com by default.
-# To install amd64 Wine, pin arm64 to ports and add amd64 repos from archive/security.
 RUN sed -i '/^Signed-By:/a Architectures: arm64' /etc/apt/sources.list.d/ubuntu.sources && \
     printf '%s\n' \
       'Types: deb' \
@@ -32,9 +47,17 @@ RUN dpkg --add-architecture amd64 && \
     apt-get update && \
     apt-get install -y --no-install-recommends \
       ca-certificates \
-      box64 \
       libfreetype6 \
       libpng16-16 \
+      libfontconfig1 \
+      libexpat1 \
+      libglib2.0-0 \
+      libgstreamer1.0-0 \
+      libgstreamer-plugins-base1.0-0 \
+      libcups2 \
+      libsdl2-2.0-0 \
+      libusb-1.0-0 \
+      wine64:amd64 \
       libc6:amd64 \
       libfreetype6:amd64 \
       libxml2:amd64 \
@@ -42,12 +65,14 @@ RUN dpkg --add-architecture amd64 && \
       libgnutls30:amd64 \
     && rm -rf /var/lib/apt/lists/*
 
-COPY --from=wine_amd64 /usr /usr
+COPY --from=box64_builder /usr/local /usr/local
+RUN ldconfig
 
 # Basic sanity checks at build time.
 RUN command -v box64
-RUN test -x /usr/bin/wine64
-RUN box64 /usr/bin/wine64 --version
+RUN test -x /usr/lib/wine/wine64
+RUN box64 -v
+RUN box64 /usr/lib/wine/wine64 --version
 
 WORKDIR /workspace
 CMD ["bash"]
