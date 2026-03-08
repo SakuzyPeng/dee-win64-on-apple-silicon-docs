@@ -27,19 +27,17 @@ English README: [README.en.md](./README.en.md)
 
 ### 2) Box64 路线（并行第三路线，候选发布）
 
-- 镜像：`ghcr.io/sakuzypeng/dee-box64-lab`
-- 标签：`latest`（验收通过后更新）、`full-latest`、`slim-latest`
-- 三步最短路径：
+- 镜像：`ghcr.io/sakuzypeng/dee-box64-lab:slim-latest`
+- 拉取：
   ```bash
-  docker pull ghcr.io/sakuzypeng/dee-box64-lab:latest
-  IMAGE_TAG=ghcr.io/sakuzypeng/dee-box64-lab:latest ./scripts/run_box64_lab_probe.sh
-  IMAGE_TAG=ghcr.io/sakuzypeng/dee-box64-lab:latest ./scripts/run_dee_with_box64.sh --help
+  docker pull ghcr.io/sakuzypeng/dee-box64-lab:slim-latest
   ```
-- 验收入口：
+- 最短自检：
   ```bash
-  IMAGE_TAG=ghcr.io/sakuzypeng/dee-box64-lab:latest ./scripts/acceptance_box64_candidate.sh
+  IMAGE_TAG=ghcr.io/sakuzypeng/dee-box64-lab:slim-latest ./scripts/run_dee_with_box64.sh --help
   ```
-- 指南：[DEE_Docker_Box64_Experiment.md](./DEE_Docker_Box64_Experiment.md)
+- 详细指南：[DEE_Docker_Box64_Experiment.md](./DEE_Docker_Box64_Experiment.md)
+- 可回退标签：`full-latest`、`slim-latest`（`latest` 仅在完整验收通过后更新）
 
 ### 3) Rosetta 2 路线（非 FEX，兼容方案）
 
