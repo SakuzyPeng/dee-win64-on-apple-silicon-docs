@@ -125,6 +125,25 @@ IMAGE_TAG=dee-box64-lab:slim-local ./scripts/benchmark_box64_baseline.sh
 - 若 slim 未通过，仅更新 `full-latest` 并附阻塞说明，`latest` 保持不变。
 - 始终保留 full/slim 双入口，确保可回退。
 
+## DME CLI 兼容性补充
+- 下列程序来自 Dolby Media Encoder（GUI）工具链内置 CLI，可独立执行音频/全景声编码任务；它们不是仓库新增二进制：
+  - `dee_ddpjoc_encoder.exe`
+  - `dee_ddp_encoder.exe`
+  - `dee_convert_sample_rate.exe`
+  - `mp4muxer.exe`
+  - `mp4demuxer.exe`
+- 仅做音频编码时，这组 CLI 相比 `dee.exe` 工作流通常具备更小运行集体积优势。
+- 交叉环境实测（`ADM WAV -> EC3 -> MP4/M4A`）：
+  - `box64` 容器：通过
+  - `fex` 容器：通过
+  - Rosetta2 `linux/amd64` 容器：通过
+  - 非容器（本机 `wine64`）：通过
+- 复现记录路径（按需本地生成）：`tmp_cross_env_dme/summary.tsv`
+- `m4a` 封装规则：`mp4muxer` 不支持 `--output-format m4a`，应使用 `--output-format mp4`，并把输出文件名设为 `.m4a`。
+- `mp4muxer` 可参考开源项目：`https://github.com/DolbyLaboratories/dlb_mp4base`。
+- 若追求极致效率：可考虑基于 `dlb_mp4base` 构建对应平台原生产物（如 `linux/arm64` 或 `macOS arm64`），减少 Wine/转译层开销。
+- 合规边界不变：仓库仍不打包/分发杜比相关二进制与授权内容。
+
 ## 常见问题
 1. `nodrv_CreateWindow` 在无头环境通常是噪声日志，不等于失败。
 2. DEE 要求 `--temp` 目录存在；封装脚本会自动创建 `y:/...` 对应宿主目录。

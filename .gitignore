@@ -29,6 +29,8 @@ release/
 
 # Local extracted tool bundle
 dolby_encoding_engine/
+dme_encoder/
+dme_encoder.zip
 
 # Keep docs and text assets only by default in this notes repo
 # (add exceptions as needed later)

@@ -125,6 +125,25 @@ Rules:
 - If slim fails acceptance, update `full-latest` only with blocker notes and keep `latest` unchanged.
 - Keep both full/slim entry tags for safe rollback.
 
+## DME CLI Compatibility Notes
+- The following executables come from the Dolby Media Encoder (GUI) toolchain built-in CLI set and can run standalone audio/Atmos encoding tasks; they are not new binaries introduced by this repository:
+  - `dee_ddpjoc_encoder.exe`
+  - `dee_ddp_encoder.exe`
+  - `dee_convert_sample_rate.exe`
+  - `mp4muxer.exe`
+  - `mp4demuxer.exe`
+- For audio-only workflows, this CLI set usually has a smaller runtime footprint than a `dee.exe`-centric flow.
+- Cross-environment validation (`ADM WAV -> EC3 -> MP4/M4A`) passed on:
+  - `box64` container
+  - `fex` container
+  - Rosetta2 `linux/amd64` container
+  - non-container host `wine64`
+- Repro record path (generated locally on demand): `tmp_cross_env_dme/summary.tsv`
+- `m4a` packaging rule: `mp4muxer` does not accept `--output-format m4a`; use `--output-format mp4` and set the output filename suffix to `.m4a`.
+- `mp4muxer` open-source reference: `https://github.com/DolbyLaboratories/dlb_mp4base`.
+- If you want maximum efficiency, consider building native platform artifacts (for example `linux/arm64` or `macOS arm64`) from `dlb_mp4base` to reduce Wine/translation overhead.
+- Compliance boundary unchanged: this repository still does not package/distribute Dolby binaries or license payloads.
+
 ## Common Notes
 1. `nodrv_CreateWindow` in headless mode is usually non-fatal noise.
 2. DEE requires `--temp` to exist; wrapper scripts auto-create host dirs for `y:/...`.
