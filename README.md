@@ -37,6 +37,7 @@ English README: [README.en.md](./README.en.md)
   IMAGE_TAG=ghcr.io/sakuzypeng/dee-box64-lab:latest ./scripts/run_dee_with_box64.sh --help
   ```
 - 详细指南：[DEE_Docker_Box64_Experiment.md](./DEE_Docker_Box64_Experiment.md)
+- 兼容性提醒：同样适配 Dolby Media Encoder（GUI）内置 CLI（如 `dee_ddpjoc_encoder.exe`、`mp4muxer.exe`）；仓库不分发相关二进制/授权内容。
 - 可回退标签：`full-latest`、`slim-latest`（`latest` 始终指向最近一次完整验收通过版本）
 
 ### 3) Rosetta 2 路线（非 FEX，兼容方案）

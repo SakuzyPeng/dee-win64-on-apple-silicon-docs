@@ -39,6 +39,7 @@ Note: the `FEX` container track is used to reduce dependency on `Rosetta 2` and 
   IMAGE_TAG=ghcr.io/sakuzypeng/dee-box64-lab:latest ./scripts/run_dee_with_box64.sh --help
   ```
 - Guide: [DEE_Docker_Box64_Experiment.en.md](./DEE_Docker_Box64_Experiment.en.md)
+- Compatibility note: also validated with Dolby Media Encoder (GUI) built-in CLI tools (for example `dee_ddpjoc_encoder.exe` and `mp4muxer.exe`); this repository does not distribute Dolby binaries/license payloads.
 - Rollback-safe tags: `full-latest`, `slim-latest` (`latest` always points to the most recently fully accepted build)
 
 ### 3) Rosetta 2 track (non-FEX compatibility path)
