@@ -56,6 +56,33 @@ English README: [README.en.md](./README.en.md)
   ```
 - 详细指南：[DEE_Docker_Minimal_Wine.md](./DEE_Docker_Minimal_Wine.md)
 
+## DME CLI 快捷入口（容器优先）
+
+- 新增统一入口：`scripts/run_dme_cli.sh`
+- 新增快捷脚本：
+  - `scripts/run_dme_ddpjoc.sh`
+  - `scripts/run_dme_ddp.sh`
+  - `scripts/run_dme_mux.sh`
+- 模式切换：`DME_MODE=box64|fex|host`（默认 `box64`）
+- 可选 alias（本机）：
+  ```bash
+  alias dme-joc='./scripts/run_dme_ddpjoc.sh'
+  alias dme-ddp='./scripts/run_dme_ddp.sh'
+  alias dme-mux='./scripts/run_dme_mux.sh'
+  ```
+- 示例：
+  ```bash
+  DME_MODE=box64 dme-joc --help
+  DME_MODE=fex dme-mux --help
+  DME_MODE=host dme-ddp --help
+  ```
+- `mp4muxer` 原生替换（便于后续自编译版本）：
+  ```bash
+  MP4MUXER_NATIVE_BIN=/path/to/native/mp4muxer \
+  DME_MODE=box64 dme-mux --help
+  ```
+  `MP4MUXER_NATIVE_BIN` 启用时，会自动把 `y:/...` 或 `z:/workspace/...` 参数转换为宿主机路径。
+
 ## 文档入口
 
 - 中文（主文档）：[DEE_Encoding_on_macOS_with_gcenx_wine.md](./DEE_Encoding_on_macOS_with_gcenx_wine.md)

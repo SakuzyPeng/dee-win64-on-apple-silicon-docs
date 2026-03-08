@@ -58,6 +58,33 @@ Note: the `FEX` container track is used to reduce dependency on `Rosetta 2` and 
   ```
 - Guide: [DEE_Docker_Minimal_Wine.en.md](./DEE_Docker_Minimal_Wine.en.md)
 
+## DME CLI Quick Entry (Container-First)
+
+- New unified entry: `scripts/run_dme_cli.sh`
+- New convenience wrappers:
+  - `scripts/run_dme_ddpjoc.sh`
+  - `scripts/run_dme_ddp.sh`
+  - `scripts/run_dme_mux.sh`
+- Mode switch: `DME_MODE=box64|fex|host` (default: `box64`)
+- Optional local aliases:
+  ```bash
+  alias dme-joc='./scripts/run_dme_ddpjoc.sh'
+  alias dme-ddp='./scripts/run_dme_ddp.sh'
+  alias dme-mux='./scripts/run_dme_mux.sh'
+  ```
+- Examples:
+  ```bash
+  DME_MODE=box64 dme-joc --help
+  DME_MODE=fex dme-mux --help
+  DME_MODE=host dme-ddp --help
+  ```
+- Native `mp4muxer` override (for future self-compiled builds):
+  ```bash
+  MP4MUXER_NATIVE_BIN=/path/to/native/mp4muxer \
+  DME_MODE=box64 dme-mux --help
+  ```
+  When `MP4MUXER_NATIVE_BIN` is set, `y:/...` and `z:/workspace/...` arguments are auto-converted to host paths.
+
 ## Documentation
 
 - English: [DEE_Encoding_on_macOS_with_gcenx_wine.en.md](./DEE_Encoding_on_macOS_with_gcenx_wine.en.md)
