@@ -89,6 +89,28 @@ IMAGE_TAG=dee-box64-lab:slim-local ./scripts/benchmark_box64_baseline.sh
 ./scripts/report_box64_image_size.sh --image dee-box64-lab:slim-local
 ```
 
+## 体积基线（2026-03-08）
+基线快照（本地构建）：
+
+| 镜像 | 大小（docker image inspect） | 备注 |
+|---|---:|---|
+| `dee-box64-lab:local` | `996,322,519` bytes（约 `950.17 MiB`） | full |
+| `dee-box64-lab:slim-local` | `773,213,959` bytes（约 `737.39 MiB`） | slim |
+
+体积门槛：
+- 发布门槛：`<= 850MB`
+- 冲刺目标：约 `700MB`（非首轮阻塞）
+
+复测命令：
+```bash
+./scripts/report_box64_image_size.sh --image dee-box64-lab:local --out-dir tmp_box64_prune/size-full
+./scripts/report_box64_image_size.sh --image dee-box64-lab:slim-local --out-dir tmp_box64_prune/size-slim
+```
+
+基线更新规则：
+- 每次改动裁剪策略后更新一次体积基线。
+- 发布前保留一份最终 `size-report.tsv` 作为发布记录。
+
 ## 发布与回退
 镜像：`ghcr.io/sakuzypeng/dee-box64-lab`
 

@@ -89,6 +89,28 @@ IMAGE_TAG=dee-box64-lab:slim-local ./scripts/benchmark_box64_baseline.sh
 ./scripts/report_box64_image_size.sh --image dee-box64-lab:slim-local
 ```
 
+## Size Baseline (March 8, 2026)
+Baseline snapshot (local build):
+
+| Image | Size (`docker image inspect`) | Note |
+|---|---:|---|
+| `dee-box64-lab:local` | `996,322,519` bytes (~`950.17 MiB`) | full |
+| `dee-box64-lab:slim-local` | `773,213,959` bytes (~`737.39 MiB`) | slim |
+
+Size gates:
+- Release gate: `<= 850MB`
+- Stretch target: around `700MB` (not a first-pass blocker)
+
+Re-check commands:
+```bash
+./scripts/report_box64_image_size.sh --image dee-box64-lab:local --out-dir tmp_box64_prune/size-full
+./scripts/report_box64_image_size.sh --image dee-box64-lab:slim-local --out-dir tmp_box64_prune/size-slim
+```
+
+Baseline update rule:
+- Refresh the size baseline after each pruning-strategy change.
+- Keep final `size-report.tsv` as the release record.
+
 ## Release and Rollback
 Image: `ghcr.io/sakuzypeng/dee-box64-lab`
 
