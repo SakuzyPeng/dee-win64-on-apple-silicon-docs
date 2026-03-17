@@ -299,13 +299,14 @@ run_legacy_check() {
   mkdir -p "$route_state/${prefix#/state/}"
 
   docker run --rm --platform linux/amd64 \
+    --entrypoint bash \
     -e WINEPREFIX="$prefix" \
     -e STRICT_FAIL_REGEX="$STRICT_FAIL_REGEX" \
     -v "$route_state:/state" \
     -v "$ROOT_DIR:/workspace" \
     -v "$DEE_DIR:/workspace/dolby_encoding_engine:ro" \
     "$image" \
-    bash -s <<'INNER'
+    -s <<'INNER'
 set -euo pipefail
 
 if [[ -x /usr/lib/wine/wine64 ]]; then
