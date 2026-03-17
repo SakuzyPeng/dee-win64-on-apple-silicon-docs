@@ -24,6 +24,13 @@ tmp_box64_prune/
 .buildx-cache/
 .buildx-cache-new/
 tmp_fex_rootfs/
+tmp_fex_bundled_state/
+tmp_fex_bundled_state_*/
+tmp_fex_bundled_compare/
+tmp_fex_bundled_allowlist/
+tmp_fex_bundled_probe_balanced/
+tmp_channel_probe/
+tmp_dee_config_gen_real/
 tmp_release_stage/
 release/
 

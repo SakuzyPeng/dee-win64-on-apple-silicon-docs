@@ -1,0 +1,243 @@
+# syntax=docker/dockerfile:1.7
+#
+# Dockerfile.fex-bundled
+#
+# FEX + 内嵌 RootFS 单镜像方案（全程 arm64 原生构建，无需 QEMU / Rosetta 2）。
+#
+# Stage rootfs_builder      : 组装 amd64 wine 运行根文件集。
+# Stage fex_payload_builder : 仅下载/解包 FEX payload（不安装完整依赖树）。
+# Final stage               : 拷贝精简 FEX payload + RootFS，并按 trim level 裁剪。
+
+# ── Stage 1：arm64 基础 + 多架构 APT 安装 amd64 Wine64 ──────────────────────
+
+FROM --platform=linux/arm64 ubuntu:24.04 AS rootfs_builder
+
+ENV DEBIAN_FRONTEND=noninteractive
+
+# 添加 amd64 架构及软件源（与 Dockerfile.box64-lab 相同策略）
+RUN sed -i '/^Signed-By:/a Architectures: arm64' /etc/apt/sources.list.d/ubuntu.sources && \
+    printf '%s\n' \
+      'Types: deb' \
+      'URIs: http://archive.ubuntu.com/ubuntu/' \
+      'Suites: noble noble-updates noble-backports' \
+      'Components: main universe restricted multiverse' \
+      'Architectures: amd64' \
+      'Signed-By: /usr/share/keyrings/ubuntu-archive-keyring.gpg' \
+      '' \
+      'Types: deb' \
+      'URIs: http://security.ubuntu.com/ubuntu/' \
+      'Suites: noble-security' \
+      'Components: main universe restricted multiverse' \
+      'Architectures: amd64' \
+      'Signed-By: /usr/share/keyrings/ubuntu-archive-keyring.gpg' \
+      > /etc/apt/sources.list.d/ubuntu-amd64.sources
+
+# 安装 amd64 Wine64 包（apt 仅下载解包 amd64 .deb，不执行任何 amd64 二进制）
+# DEE 是纯 64-bit，不需要 wine32/i386
+# 同时提取 bash:amd64 + libtinfo6:amd64，供 FEXBash 使用
+RUN dpkg --add-architecture amd64 && \
+    apt-get update && \
+    apt-get install -y --no-install-recommends \
+      wine:amd64 \
+      wine64:amd64 \
+      wine64-preloader:amd64 && \
+    mkdir -p /tmp/bash-pkg /tmp/bash-amd64 && \
+    cd /tmp/bash-pkg && \
+    apt-get download bash:amd64 libtinfo6:amd64 && \
+    for deb in *.deb; do dpkg -x "$deb" /tmp/bash-amd64/; done
+
+# 构建时裁剪（全程 arm64 shell 执行）
+RUN rm -rf \
+      /var/cache/apt \
+      /var/lib/apt/lists \
+      /usr/share/doc \
+      /usr/share/man \
+      /usr/share/info \
+      /usr/share/locale \
+      /usr/share/icons \
+      /usr/share/gtk-3.0 \
+      /usr/share/gtk-4.0 \
+      /usr/share/X11 \
+      /usr/share/vulkan \
+      /usr/share/mesa-demos \
+      /usr/lib/x86_64-linux-gnu/dri \
+      /usr/lib/x86_64-linux-gnu/perl \
+      /usr/lib/x86_64-linux-gnu/perl-base \
+      /usr/share/perl \
+      /usr/lib/python3 \
+      /usr/lib/python3.12 \
+      /usr/lib/git-core \
+      /usr/bin/git && \
+    find /usr/lib/x86_64-linux-gnu -maxdepth 1 \( \
+      -name 'libLLVM*.so*'       -o \
+      -name 'libgallium*.so*'    -o \
+      -name 'libvulkan*.so*'     -o \
+      -name 'librenderdoc.so'    -o \
+      -name 'libspirv_to_dxil*' \
+    \) -delete 2>/dev/null || true
+
+# wine64 二进制是 amd64 ELF，在 arm64 host 上不可直接执行；
+# 仅验证文件存在（内容正确性由 FEX 在运行时保证）
+RUN test -f /usr/lib/wine/wine64
+
+# ── Stage 2：FEX payload 提取（不安装完整依赖树）────────────────────────────
+
+FROM --platform=linux/arm64 ubuntu:24.04 AS fex_payload_builder
+
+ENV DEBIAN_FRONTEND=noninteractive
+
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
+      software-properties-common \
+      ca-certificates \
+      gnupg && \
+    add-apt-repository -y ppa:fex-emu/fex && \
+    apt-get update && \
+    mkdir -p /tmp/fex-debs /tmp/fex-payload && \
+    cd /tmp/fex-debs && \
+    apt-get download fex-emu-armv8.2 fex-emu-wine && \
+    for deb in *.deb; do dpkg-deb -x "$deb" /tmp/fex-payload/; done && \
+    rm -rf /var/lib/apt/lists/*
+
+# ── Stage 3：RootFS payload 裁剪（避免“先拷贝后删除”的假裁剪）────────────────
+
+FROM --platform=linux/arm64 rootfs_builder AS rootfs_payload_builder
+
+ARG BUNDLED_TRIM_LEVEL=safe
+
+COPY configs/fex_bundled_allowlist.txt            /tmp/fex_bundled_allowlist.txt
+COPY configs/fex_bundled_aggressive_allowlist.txt /tmp/fex_bundled_aggressive_allowlist.txt
+
+RUN set -eux; \
+    case "${BUNDLED_TRIM_LEVEL}" in \
+      safe) \
+        echo "BUNDLED_TRIM_LEVEL=safe (no builtin trimming)"; \
+        ;; \
+      balanced|aggressive) \
+        builtin_dir="/usr/lib/x86_64-linux-gnu/wine/x86_64-windows"; \
+        all_list=/tmp/fex_all_winfiles.txt; \
+        keep_list=/tmp/fex_keep_winfiles.txt; \
+        remove_list=/tmp/fex_remove_winfiles.txt; \
+        find "${builtin_dir}" -type f | sort -u > "${all_list}"; \
+        awk 'NF && $1 !~ /^#/' /tmp/fex_bundled_allowlist.txt | sort -u > "${keep_list}"; \
+        { \
+          printf '%s\n' \
+            /usr/lib/x86_64-linux-gnu/wine/x86_64-windows/ntdll.dll \
+            /usr/lib/x86_64-linux-gnu/wine/x86_64-windows/kernelbase.dll \
+            /usr/lib/x86_64-linux-gnu/wine/x86_64-windows/kernel32.dll \
+            /usr/lib/x86_64-linux-gnu/wine/x86_64-windows/user32.dll \
+            /usr/lib/x86_64-linux-gnu/wine/x86_64-windows/ole32.dll \
+            /usr/lib/x86_64-linux-gnu/wine/x86_64-windows/oleaut32.dll \
+            /usr/lib/x86_64-linux-gnu/wine/x86_64-windows/ucrtbase.dll \
+            /usr/lib/x86_64-linux-gnu/wine/x86_64-windows/msvcrt.dll \
+            /usr/lib/x86_64-linux-gnu/wine/x86_64-windows/rpcrt4.dll \
+            /usr/lib/x86_64-linux-gnu/wine/x86_64-windows/advapi32.dll \
+            /usr/lib/x86_64-linux-gnu/wine/x86_64-windows/sechost.dll \
+            /usr/lib/x86_64-linux-gnu/wine/x86_64-windows/ws2_32.dll \
+            /usr/lib/x86_64-linux-gnu/wine/x86_64-windows/shcore.dll \
+            /usr/lib/x86_64-linux-gnu/wine/x86_64-windows/shlwapi.dll \
+            /usr/lib/x86_64-linux-gnu/wine/x86_64-windows/shell32.dll \
+            /usr/lib/x86_64-linux-gnu/wine/x86_64-windows/combase.dll \
+            /usr/lib/x86_64-linux-gnu/wine/x86_64-windows/comctl32.dll \
+            /usr/lib/x86_64-linux-gnu/wine/x86_64-windows/wineboot.exe \
+            /usr/lib/x86_64-linux-gnu/wine/x86_64-windows/winedevice.exe \
+            /usr/lib/x86_64-linux-gnu/wine/x86_64-windows/services.exe \
+            /usr/lib/x86_64-linux-gnu/wine/x86_64-windows/rundll32.exe \
+            /usr/lib/x86_64-linux-gnu/wine/x86_64-windows/explorer.exe; \
+        } >> "${keep_list}"; \
+        sort -u -o "${keep_list}" "${keep_list}"; \
+        comm -23 "${all_list}" "${keep_list}" > "${remove_list}"; \
+        if [ -s "${remove_list}" ]; then \
+          xargs -r rm -f < "${remove_list}"; \
+        fi; \
+        ;; \
+      *) \
+        echo "Unsupported BUNDLED_TRIM_LEVEL=${BUNDLED_TRIM_LEVEL}" >&2; \
+        exit 2; \
+        ;; \
+    esac; \
+    if [ "${BUNDLED_TRIM_LEVEL}" = "aggressive" ]; then \
+      all_so=/tmp/fex_all_x64_so.txt; \
+      keep_so=/tmp/fex_keep_x64_so.txt; \
+      remove_so=/tmp/fex_remove_x64_so.txt; \
+      find /usr/lib/x86_64-linux-gnu \
+        -type f \( -name '*.so' -o -name '*.so.*' \) \
+        ! -path '*/wine/*' \
+        | sort -u > "${all_so}"; \
+      awk 'NF && $1 !~ /^#/' /tmp/fex_bundled_aggressive_allowlist.txt | sort -u > "${keep_so}"; \
+      { \
+        printf '%s\n' \
+          /usr/lib/x86_64-linux-gnu/ld-linux-x86-64.so.2 \
+          /usr/lib/x86_64-linux-gnu/libc.so.6 \
+          /usr/lib/x86_64-linux-gnu/libm.so.6 \
+          /usr/lib/x86_64-linux-gnu/libdl.so.2 \
+          /usr/lib/x86_64-linux-gnu/libpthread.so.0 \
+          /usr/lib/x86_64-linux-gnu/librt.so.1 \
+          /usr/lib/x86_64-linux-gnu/libgcc_s.so.1 \
+          /usr/lib/x86_64-linux-gnu/libstdc++.so.6 \
+          /usr/lib/x86_64-linux-gnu/libz.so.1 \
+          /usr/lib/x86_64-linux-gnu/libtinfo.so.6 \
+          /usr/lib/x86_64-linux-gnu/libwine.so.1; \
+      } >> "${keep_so}"; \
+      sort -u -o "${keep_so}" "${keep_so}"; \
+      comm -23 "${all_so}" "${keep_so}" > "${remove_so}"; \
+      if [ -s "${remove_so}" ]; then \
+        xargs -r rm -f < "${remove_so}"; \
+      fi; \
+    fi
+
+# ── Final Stage：arm64 精简 FEX + 内嵌 RootFS ───────────────────────────────
+
+FROM --platform=linux/arm64 ubuntu:24.04
+
+LABEL org.opencontainers.image.source="https://github.com/SakuzyPeng/dee-win64-on-apple-silicon-docs"
+
+ENV DEBIAN_FRONTEND=noninteractive
+
+ARG ROOTFS_PATH=/root/.fex-emu/RootFS/Ubuntu_24_04
+
+# 最小 FEX 运行载荷（避免 host 层完整 apt 依赖树膨胀）
+COPY --from=fex_payload_builder /tmp/fex-payload/usr/bin/FEX            /usr/bin/FEX
+COPY --from=fex_payload_builder /tmp/fex-payload/usr/bin/FEXInterpreter /usr/bin/FEXInterpreter
+COPY --from=fex_payload_builder /tmp/fex-payload/usr/bin/FEXServer      /usr/bin/FEXServer
+COPY --from=fex_payload_builder /tmp/fex-payload/usr/bin/FEXBash        /usr/bin/FEXBash
+COPY --from=fex_payload_builder /tmp/fex-payload/usr/share/fex-emu      /usr/share/fex-emu
+COPY --from=fex_payload_builder /tmp/fex-payload/usr/lib/wine/aarch64-windows/libarm64ecfex.dll /usr/lib/wine/aarch64-windows/libarm64ecfex.dll
+COPY --from=fex_payload_builder /tmp/fex-payload/usr/lib/wine/aarch64-windows/libwow64fex.dll   /usr/lib/wine/aarch64-windows/libwow64fex.dll
+
+# 将 Stage 1 的 amd64 文件组装为 FEX RootFS
+RUN mkdir -p ${ROOTFS_PATH}/usr/lib ${ROOTFS_PATH}/usr/bin ${ROOTFS_PATH}/etc
+
+COPY --from=rootfs_payload_builder /usr/lib/x86_64-linux-gnu                 ${ROOTFS_PATH}/usr/lib/x86_64-linux-gnu
+COPY --from=rootfs_payload_builder /usr/lib/wine                             ${ROOTFS_PATH}/usr/lib/wine
+COPY --from=rootfs_payload_builder /usr/share/wine                           ${ROOTFS_PATH}/usr/share/wine
+COPY --from=rootfs_payload_builder /etc/ld.so.conf.d                         ${ROOTFS_PATH}/etc/ld.so.conf.d
+COPY --from=rootfs_payload_builder /tmp/bash-amd64/usr/bin/bash              ${ROOTFS_PATH}/usr/bin/bash
+COPY --from=rootfs_payload_builder /tmp/bash-amd64/usr/lib/x86_64-linux-gnu/ ${ROOTFS_PATH}/usr/lib/x86_64-linux-gnu/
+
+# Ubuntu 24.04 merged-usr 符号链接
+RUN ln -s usr/lib                  ${ROOTFS_PATH}/lib   && \
+    ln -s usr/bin                  ${ROOTFS_PATH}/bin   && \
+    ln -s usr/sbin                 ${ROOTFS_PATH}/sbin  && \
+    ln -s usr/lib/x86_64-linux-gnu ${ROOTFS_PATH}/lib64 && \
+    ln -s x86_64-linux-gnu         ${ROOTFS_PATH}/usr/lib64 && \
+    ln -s bash                     ${ROOTFS_PATH}/usr/bin/sh
+
+# 写入 FEX 配置文件（正确路径：~/.fex-emu/Config.json）
+RUN printf '{"Config":{"RootFS":"Ubuntu_24_04"}}\n' > /root/.fex-emu/Config.json
+
+# 构建时验证：FEX + wine64 可执行
+RUN test -f ${ROOTFS_PATH}/usr/lib/wine/wine64
+RUN command -v FEX
+RUN FEX /usr/lib/wine/wine64 --version
+
+# HOST 层 wine 二进制：使 FEX 的 exec() 拦截能在 HOST 文件系统找到 wine 子进程
+COPY --from=rootfs_payload_builder /usr/lib/wine/wine64                  /usr/lib/wine/wine64
+COPY --from=rootfs_payload_builder /usr/lib/wine/wineserver64            /usr/lib/wine/wineserver64
+COPY --from=rootfs_payload_builder /usr/lib/wine/wine64-preloader.static /usr/lib/wine/wine64-preloader.static
+COPY --from=rootfs_payload_builder /usr/lib/wine/wine64-preloader        /usr/lib/wine/wine64-preloader
+COPY --from=rootfs_payload_builder /usr/lib/wine/wineserver              /usr/lib/wine/wineserver
+COPY --from=rootfs_payload_builder /usr/lib/wine/wineapploader           /usr/lib/wine/wineapploader
+
+WORKDIR /workspace
+CMD ["bash"]
