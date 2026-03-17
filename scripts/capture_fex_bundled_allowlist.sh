@@ -250,6 +250,8 @@ trap 'rm -f "$TMP_BUILTINS" "$TMP_SO"' EXIT
 /usr/lib/x86_64-linux-gnu/wine/x86_64-windows/shell32.dll
 /usr/lib/x86_64-linux-gnu/wine/x86_64-windows/combase.dll
 /usr/lib/x86_64-linux-gnu/wine/x86_64-windows/comctl32.dll
+/usr/lib/x86_64-linux-gnu/wine/x86_64-windows/ntoskrnl.exe
+/usr/lib/x86_64-linux-gnu/wine/x86_64-windows/mountmgr.sys
 /usr/lib/x86_64-linux-gnu/wine/x86_64-windows/wineboot.exe
 /usr/lib/x86_64-linux-gnu/wine/x86_64-windows/winedevice.exe
 /usr/lib/x86_64-linux-gnu/wine/x86_64-windows/services.exe

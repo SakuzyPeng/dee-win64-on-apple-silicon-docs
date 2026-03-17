@@ -5,7 +5,7 @@ set -euo pipefail
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 
 BUILDER="${BUILDER:-dee-builder}"
-IMAGE_TAG="${IMAGE_TAG:-dee-fex-bundled:phase2-balanced-v2}"
+IMAGE_TAG="${IMAGE_TAG:-dee-fex-bundled:phase2-balanced-v3}"
 DOCKERFILE="${DOCKERFILE:-$ROOT_DIR/Dockerfile.fex-bundled}"
 CONTEXT_DIR="${CONTEXT_DIR:-$ROOT_DIR}"
 BUNDLED_TRIM_LEVEL="${BUNDLED_TRIM_LEVEL:-balanced}"
