@@ -26,6 +26,21 @@ English README: [README.en.md](./README.en.md)
   ```
 - 详细指南：[DEE_Docker_FEX_Experiment.md](./DEE_Docker_FEX_Experiment.md)
 
+### 1.1) FEX Bundled（并行发布，内嵌 RootFS）
+
+- 并行镜像（不替换旧 `dee-fex-lab:latest`）：
+  - `ghcr.io/sakuzypeng/dee-fex-bundled:phase2-balanced-v2`
+  - `ghcr.io/sakuzypeng/dee-fex-bundled:phase2-balanced`（当前指向同一版本）
+- 拉取：
+  ```bash
+  docker pull ghcr.io/sakuzypeng/dee-fex-bundled:phase2-balanced-v2
+  ```
+- 最短自检：
+  ```bash
+  IMAGE_TAG=ghcr.io/sakuzypeng/dee-fex-bundled:phase2-balanced-v2 ./scripts/run_dee_with_fex_bundled.sh --help
+  ```
+- 诊断与回归记录：[DEE_FEX_Bundled_Diagnosis.md](./DEE_FEX_Bundled_Diagnosis.md)
+
 ### 2) Box64 路线（并行第三路线，稳定发布）
 
 - 镜像：`ghcr.io/sakuzypeng/dee-box64-lab:latest`

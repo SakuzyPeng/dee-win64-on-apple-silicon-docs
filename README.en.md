@@ -28,6 +28,21 @@ Note: the `FEX` container track is used to reduce dependency on `Rosetta 2` and 
   ```
 - Guide: [DEE_Docker_FEX_Experiment.en.md](./DEE_Docker_FEX_Experiment.en.md)
 
+### 1.1) FEX Bundled (parallel release, embedded RootFS)
+
+- Parallel images (without replacing legacy `dee-fex-lab:latest`):
+  - `ghcr.io/sakuzypeng/dee-fex-bundled:phase2-balanced-v2`
+  - `ghcr.io/sakuzypeng/dee-fex-bundled:phase2-balanced` (currently same build)
+- Pull:
+  ```bash
+  docker pull ghcr.io/sakuzypeng/dee-fex-bundled:phase2-balanced-v2
+  ```
+- Quick smoke test:
+  ```bash
+  IMAGE_TAG=ghcr.io/sakuzypeng/dee-fex-bundled:phase2-balanced-v2 ./scripts/run_dee_with_fex_bundled.sh --help
+  ```
+- Diagnosis and regression notes: [DEE_FEX_Bundled_Diagnosis.md](./DEE_FEX_Bundled_Diagnosis.md)
+
 ### 2) Box64 track (parallel third path, stable release)
 
 - Image: `ghcr.io/sakuzypeng/dee-box64-lab:latest`
