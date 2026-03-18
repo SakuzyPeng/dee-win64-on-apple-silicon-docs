@@ -5,7 +5,7 @@ set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 
-IMAGE_TAG="${IMAGE_TAG:-dee-fex-bundled:phase2-balanced-v3}"
+IMAGE_TAG="${IMAGE_TAG:-dee-fex-bundled:phase2-balanced-v4}"
 RUNS="${RUNS:-3}"
 STATE_DIR="${STATE_DIR:-$ROOT_DIR/tmp_fex_bundled_state_bench}"
 WINEPREFIX="${WINEPREFIX:-/state/WinePrefixes/bench_fex_bundled}"
@@ -36,7 +36,7 @@ Usage:
   scripts/benchmark_fex_bundled_gate.sh [options]
 
 Options:
-  --image TAG      bundled image tag (default: dee-fex-bundled:phase2-balanced-v3)
+  --image TAG      bundled image tag (default: dee-fex-bundled:phase2-balanced-v4)
   --runs N         encode runs (default: 3)
   --state-dir DIR  benchmark state directory
   -h, --help       show help

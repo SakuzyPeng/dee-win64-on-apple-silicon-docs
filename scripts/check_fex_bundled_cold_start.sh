@@ -9,7 +9,7 @@ set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 
-IMAGE_TAG="${IMAGE_TAG:-dee-fex-bundled:phase2-balanced-v3}"
+IMAGE_TAG="${IMAGE_TAG:-dee-fex-bundled:phase2-balanced-v4}"
 DEE_DIR="${DEE_DIR:-$ROOT_DIR/dolby_encoding_engine}"
 STATE_DIR="${STATE_DIR:-$ROOT_DIR/tmp_fex_bundled_state_coldcheck}"
 WINEPREFIX="${WINEPREFIX:-/state/WinePrefixes/cold_fex_bundled}"
@@ -18,6 +18,7 @@ HELP_TIMEOUT="${HELP_TIMEOUT:-60}"
 WINE_BIN="${WINE_BIN:-/usr/lib/wine/wine64}"
 DEE_WIN_EXE="${DEE_WIN_EXE:-y:/dolby_encoding_engine/dee.exe}"
 STRICT_FAIL_REGEX="${STRICT_FAIL_REGEX:-Library ntoskrnl\\.exe .*not found|service L\"Winedevice[0-9]+\" failed to start|Importing dlls for .*winedevice\\.exe failed}"
+SHOW_LIVE_LOGS="${SHOW_LIVE_LOGS:-1}"
 
 usage() {
   cat <<'EOF'
@@ -80,6 +81,7 @@ docker run --rm -i --platform linux/arm64 \
   -e WINEPREFIX="$WINEPREFIX" \
   -e WINEBOOT_TIMEOUT="$WINEBOOT_TIMEOUT" \
   -e HELP_TIMEOUT="$HELP_TIMEOUT" \
+  -e SHOW_LIVE_LOGS="$SHOW_LIVE_LOGS" \
   -e STRICT_FAIL_REGEX="$STRICT_FAIL_REGEX" \
   -e WINE_BIN="$WINE_BIN" \
   -e DEE_WIN_EXE="$DEE_WIN_EXE" \
@@ -99,13 +101,20 @@ ln -sfn /workspace "$WINEPREFIX/dosdevices/y:"
 
 echo "STEP:wineboot"
 set +e
-timeout "$WINEBOOT_TIMEOUT" \
-  FEX /bin/bash -lc "WINEPREFIX=$WINEPREFIX WINEDEBUG=fixme-all $WINE_BIN wineboot.exe -u" \
-  > /tmp/cold_wineboot.log 2>&1
-wb_rc=$?
+if [[ "$SHOW_LIVE_LOGS" == "1" ]]; then
+  timeout "$WINEBOOT_TIMEOUT" \
+    FEX /bin/bash -lc "WINEPREFIX=$WINEPREFIX WINEDEBUG=fixme-all $WINE_BIN wineboot.exe -u" \
+    2>&1 | tee /tmp/cold_wineboot.log
+  wb_rc=${PIPESTATUS[0]}
+else
+  timeout "$WINEBOOT_TIMEOUT" \
+    FEX /bin/bash -lc "WINEPREFIX=$WINEPREFIX WINEDEBUG=fixme-all $WINE_BIN wineboot.exe -u" \
+    > /tmp/cold_wineboot.log 2>&1
+  wb_rc=$?
+  sed -n '1,120p' /tmp/cold_wineboot.log
+fi
 set -e
 echo "WINEBOOT_RC:$wb_rc"
-sed -n '1,120p' /tmp/cold_wineboot.log
 
 if [[ "$wb_rc" -ne 0 ]]; then
   echo "Cold-start fail: wineboot returned $wb_rc" >&2
@@ -119,13 +128,20 @@ fi
 
 echo "STEP:help"
 set +e
-timeout "$HELP_TIMEOUT" \
-  FEX /bin/bash -lc "WINEPREFIX=$WINEPREFIX WINEDEBUG=fixme-all $WINE_BIN $DEE_WIN_EXE --help" \
-  > /tmp/cold_help.log 2>&1
-help_rc=$?
+if [[ "$SHOW_LIVE_LOGS" == "1" ]]; then
+  timeout "$HELP_TIMEOUT" \
+    FEX /bin/bash -lc "WINEPREFIX=$WINEPREFIX WINEDEBUG=fixme-all $WINE_BIN $DEE_WIN_EXE --help" \
+    2>&1 | tee /tmp/cold_help.log
+  help_rc=${PIPESTATUS[0]}
+else
+  timeout "$HELP_TIMEOUT" \
+    FEX /bin/bash -lc "WINEPREFIX=$WINEPREFIX WINEDEBUG=fixme-all $WINE_BIN $DEE_WIN_EXE --help" \
+    > /tmp/cold_help.log 2>&1
+  help_rc=$?
+  sed -n '1,120p' /tmp/cold_help.log
+fi
 set -e
 echo "HELP_RC:$help_rc"
-sed -n '1,120p' /tmp/cold_help.log
 
 if [[ "$help_rc" -ne 0 ]]; then
   echo "Cold-start fail: dee --help returned $help_rc" >&2

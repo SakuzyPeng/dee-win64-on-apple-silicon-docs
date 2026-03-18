@@ -15,6 +15,17 @@ Note: the `FEX` container track is used to reduce dependency on `Rosetta 2` and 
 > GitHub Packages renders the repository README; use the image-specific entry points below.
 > Compatibility note (global): validated with a Dolby Media Encoder (GUI) built-in CLI subset (`dee_ddpjoc_encoder.exe`, `dee_ddp_encoder.exe`, `dee_convert_sample_rate.exe`, `mp4muxer.exe`, `mp4demuxer.exe`) across Box64/FEX/Rosetta2 containers and non-container `wine64`; this is not a claim that all Dolby Media Encoder tools are fully verified.
 
+### Route Size Matrix (2026-03-18)
+
+| Track | Recommended image | Platform | Local image size (`docker images`) | Compressed size (GHCR manifest) |
+| --- | --- | --- | --- | --- |
+| FEX (External RootFS) | `ghcr.io/sakuzypeng/dee-fex-lab:latest` | `linux/arm64` | `632MB` | `186.4 MiB` |
+| FEX Bundled (Embedded RootFS) | `ghcr.io/sakuzypeng/dee-fex-bundled:phase2-balanced-v4` | `linux/arm64` | `354MB` | `116.2 MiB` |
+| Box64 | `ghcr.io/sakuzypeng/dee-box64-lab:latest` | `linux/arm64` | `773MB` | `226.3 MiB` |
+| Rosetta 2 (legacy) | `ghcr.io/sakuzypeng/dee-wine-minimal:legacy-rosetta2-latest` | `linux/amd64` | `442MB` | `116.1 MiB` |
+
+> Note: compressed size is computed as `config + layers` from image manifest; real pull traffic depends on layer reuse and local cache.
+
 ### 1) FEX track (reduce dependency on Rosetta 2)
 
 - Image: `ghcr.io/sakuzypeng/dee-fex-lab:latest`
@@ -31,15 +42,15 @@ Note: the `FEX` container track is used to reduce dependency on `Rosetta 2` and 
 ### 1.1) FEX Bundled (parallel release, embedded RootFS)
 
 - Parallel images (without replacing legacy `dee-fex-lab:latest`):
-  - `ghcr.io/sakuzypeng/dee-fex-bundled:phase2-balanced-v2`
-  - `ghcr.io/sakuzypeng/dee-fex-bundled:phase2-balanced` (currently same build)
+  - `ghcr.io/sakuzypeng/dee-fex-bundled:phase2-balanced-v4`
+  - `ghcr.io/sakuzypeng/dee-fex-bundled:phase2-balanced` (stable alias, currently points to `v4`)
 - Pull:
   ```bash
-  docker pull ghcr.io/sakuzypeng/dee-fex-bundled:phase2-balanced-v2
+  docker pull ghcr.io/sakuzypeng/dee-fex-bundled:phase2-balanced-v4
   ```
 - Quick smoke test:
   ```bash
-  IMAGE_TAG=ghcr.io/sakuzypeng/dee-fex-bundled:phase2-balanced-v2 ./scripts/run_dee_with_fex_bundled.sh --help
+  IMAGE_TAG=ghcr.io/sakuzypeng/dee-fex-bundled:phase2-balanced-v4 ./scripts/run_dee_with_fex_bundled.sh --help
   ```
 - Diagnosis and regression notes: [DEE_FEX_Bundled_Diagnosis.md](./DEE_FEX_Bundled_Diagnosis.md)
 

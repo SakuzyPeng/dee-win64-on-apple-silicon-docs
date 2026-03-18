@@ -13,6 +13,17 @@ English README: [README.en.md](./README.en.md)
 > GitHub Packages 页面会显示仓库 README；请按下列镜像入口选择对应路线。
 > 兼容性说明（全局）：已实测兼容 Dolby Media Encoder（GUI）内置 CLI 子集（`dee_ddpjoc_encoder.exe`、`dee_ddp_encoder.exe`、`dee_convert_sample_rate.exe`、`mp4muxer.exe`、`mp4demuxer.exe`），覆盖 Box64/FEX/Rosetta2 容器与非容器 `wine64`；不代表 Dolby Media Encoder 全部工具均已验证。
 
+### 路线体积快速矩阵（2026-03-18）
+
+| 路线 | 推荐镜像 | 平台 | 本地镜像体积（`docker images`） | 压缩后体积（GHCR manifest） |
+| --- | --- | --- | --- | --- |
+| FEX（外置 RootFS） | `ghcr.io/sakuzypeng/dee-fex-lab:latest` | `linux/arm64` | `632MB` | `186.4 MiB` |
+| FEX Bundled（内嵌 RootFS） | `ghcr.io/sakuzypeng/dee-fex-bundled:phase2-balanced-v4` | `linux/arm64` | `354MB` | `116.2 MiB` |
+| Box64 | `ghcr.io/sakuzypeng/dee-box64-lab:latest` | `linux/arm64` | `773MB` | `226.3 MiB` |
+| Rosetta 2（legacy） | `ghcr.io/sakuzypeng/dee-wine-minimal:legacy-rosetta2-latest` | `linux/amd64` | `442MB` | `116.1 MiB` |
+
+> 说明：压缩后体积按镜像 `manifest` 的 `config + layers` 大小汇总；实际拉取流量会受 layer 复用与本地缓存影响。
+
 ### 1) FEX 路线（降低对 Rosetta 2 的依赖）
 
 - 镜像：`ghcr.io/sakuzypeng/dee-fex-lab:latest`
@@ -29,15 +40,15 @@ English README: [README.en.md](./README.en.md)
 ### 1.1) FEX Bundled（并行发布，内嵌 RootFS）
 
 - 并行镜像（不替换旧 `dee-fex-lab:latest`）：
-  - `ghcr.io/sakuzypeng/dee-fex-bundled:phase2-balanced-v2`
-  - `ghcr.io/sakuzypeng/dee-fex-bundled:phase2-balanced`（当前指向同一版本）
+  - `ghcr.io/sakuzypeng/dee-fex-bundled:phase2-balanced-v4`
+  - `ghcr.io/sakuzypeng/dee-fex-bundled:phase2-balanced`（稳定别名，当前指向 `v4`）
 - 拉取：
   ```bash
-  docker pull ghcr.io/sakuzypeng/dee-fex-bundled:phase2-balanced-v2
+  docker pull ghcr.io/sakuzypeng/dee-fex-bundled:phase2-balanced-v4
   ```
 - 最短自检：
   ```bash
-  IMAGE_TAG=ghcr.io/sakuzypeng/dee-fex-bundled:phase2-balanced-v2 ./scripts/run_dee_with_fex_bundled.sh --help
+  IMAGE_TAG=ghcr.io/sakuzypeng/dee-fex-bundled:phase2-balanced-v4 ./scripts/run_dee_with_fex_bundled.sh --help
   ```
 - 诊断与回归记录：[DEE_FEX_Bundled_Diagnosis.md](./DEE_FEX_Bundled_Diagnosis.md)
 
