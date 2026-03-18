@@ -17,30 +17,17 @@ English README: [README.en.md](./README.en.md)
 
 | 路线 | 推荐镜像 | 平台 | 本地镜像体积（`docker images`） | 压缩后体积（GHCR manifest） |
 | --- | --- | --- | --- | --- |
-| FEX（外置 RootFS） | `ghcr.io/sakuzypeng/dee-fex-lab:latest` | `linux/arm64` | `632MB` | `186.4 MiB` |
 | FEX Bundled（内嵌 RootFS） | `ghcr.io/sakuzypeng/dee-fex-bundled:phase2-balanced-v4` | `linux/arm64` | `354MB` | `116.2 MiB` |
 | Box64 | `ghcr.io/sakuzypeng/dee-box64-lab:latest` | `linux/arm64` | `773MB` | `226.3 MiB` |
 | Rosetta 2（legacy） | `ghcr.io/sakuzypeng/dee-wine-minimal:legacy-rosetta2-latest` | `linux/amd64` | `442MB` | `116.1 MiB` |
 
 > 说明：压缩后体积按镜像 `manifest` 的 `config + layers` 大小汇总；实际拉取流量会受 layer 复用与本地缓存影响。
 > 统计口径：`本地镜像体积` 来自 `docker images`；`压缩后体积` 来自 GHCR `manifest`（按目标平台汇总）。
+> 变更说明：外置 RootFS 的 `dee-fex-lab` 已下线，主线仅保留 FEX Bundled。
 
-### 1) FEX 路线（降低对 Rosetta 2 的依赖）
+### 1) FEX Bundled（内嵌 RootFS，主线推荐）
 
-- 镜像：`ghcr.io/sakuzypeng/dee-fex-lab:latest`
-- 拉取：
-  ```bash
-  docker pull ghcr.io/sakuzypeng/dee-fex-lab:latest
-  ```
-- 最短自检：
-  ```bash
-  IMAGE_TAG=ghcr.io/sakuzypeng/dee-fex-lab:latest ./scripts/run_dee_with_fex.sh --help
-  ```
-- 详细指南：[DEE_Docker_FEX_Experiment.md](./DEE_Docker_FEX_Experiment.md)
-
-### 1.1) FEX Bundled（并行发布，内嵌 RootFS）
-
-- 并行镜像（不替换旧 `dee-fex-lab:latest`）：
+- 镜像：
   - `ghcr.io/sakuzypeng/dee-fex-bundled:phase2-balanced-v4`
   - `ghcr.io/sakuzypeng/dee-fex-bundled:phase2-balanced`（稳定别名，当前指向 `v4`）
 - 拉取：
@@ -52,6 +39,7 @@ English README: [README.en.md](./README.en.md)
   IMAGE_TAG=ghcr.io/sakuzypeng/dee-fex-bundled:phase2-balanced-v4 ./scripts/run_dee_with_fex_bundled.sh --help
   ```
 - 诊断与回归记录：[DEE_FEX_Bundled_Diagnosis.md](./DEE_FEX_Bundled_Diagnosis.md)
+- 历史实验记录（外置 RootFS）：[DEE_Docker_FEX_Experiment.md](./DEE_Docker_FEX_Experiment.md)
 
 ### 2) Box64 路线（并行第三路线，稳定发布）
 

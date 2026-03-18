@@ -19,30 +19,17 @@ Note: the `FEX` container track is used to reduce dependency on `Rosetta 2` and 
 
 | Track | Recommended image | Platform | Local image size (`docker images`) | Compressed size (GHCR manifest) |
 | --- | --- | --- | --- | --- |
-| FEX (External RootFS) | `ghcr.io/sakuzypeng/dee-fex-lab:latest` | `linux/arm64` | `632MB` | `186.4 MiB` |
 | FEX Bundled (Embedded RootFS) | `ghcr.io/sakuzypeng/dee-fex-bundled:phase2-balanced-v4` | `linux/arm64` | `354MB` | `116.2 MiB` |
 | Box64 | `ghcr.io/sakuzypeng/dee-box64-lab:latest` | `linux/arm64` | `773MB` | `226.3 MiB` |
 | Rosetta 2 (legacy) | `ghcr.io/sakuzypeng/dee-wine-minimal:legacy-rosetta2-latest` | `linux/amd64` | `442MB` | `116.1 MiB` |
 
 > Note: compressed size is computed as `config + layers` from image manifest; real pull traffic depends on layer reuse and local cache.
 > Measurement method: `Local image size` is from `docker images`; `Compressed size` is from GHCR manifest summed for the target platform.
+> Change note: external-RootFS `dee-fex-lab` has been retired; FEX Bundled is the only maintained FEX track.
 
-### 1) FEX track (reduce dependency on Rosetta 2)
+### 1) FEX Bundled (embedded RootFS, primary recommendation)
 
-- Image: `ghcr.io/sakuzypeng/dee-fex-lab:latest`
-- Pull:
-  ```bash
-  docker pull ghcr.io/sakuzypeng/dee-fex-lab:latest
-  ```
-- Quick smoke test:
-  ```bash
-  IMAGE_TAG=ghcr.io/sakuzypeng/dee-fex-lab:latest ./scripts/run_dee_with_fex.sh --help
-  ```
-- Guide: [DEE_Docker_FEX_Experiment.en.md](./DEE_Docker_FEX_Experiment.en.md)
-
-### 1.1) FEX Bundled (parallel release, embedded RootFS)
-
-- Parallel images (without replacing legacy `dee-fex-lab:latest`):
+- Images:
   - `ghcr.io/sakuzypeng/dee-fex-bundled:phase2-balanced-v4`
   - `ghcr.io/sakuzypeng/dee-fex-bundled:phase2-balanced` (stable alias, currently points to `v4`)
 - Pull:
@@ -54,6 +41,7 @@ Note: the `FEX` container track is used to reduce dependency on `Rosetta 2` and 
   IMAGE_TAG=ghcr.io/sakuzypeng/dee-fex-bundled:phase2-balanced-v4 ./scripts/run_dee_with_fex_bundled.sh --help
   ```
 - Diagnosis and regression notes: [DEE_FEX_Bundled_Diagnosis.md](./DEE_FEX_Bundled_Diagnosis.md)
+- Historical experiment record (external RootFS): [DEE_Docker_FEX_Experiment.en.md](./DEE_Docker_FEX_Experiment.en.md)
 
 ### 2) Box64 track (parallel third path, stable release)
 
