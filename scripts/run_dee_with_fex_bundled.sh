@@ -80,6 +80,7 @@ prepare_workspace_dirs_from_args "${ARGS[@]}"
 ARGS_Q="$(printf '%q ' "${ARGS[@]}")"
 
 echo "Running DEE under FEX bundled image: $IMAGE_TAG"
+# Filter known harmless fontconfig noise from minimal/bundled image while preserving all other stderr lines.
 docker run --rm --platform linux/arm64 \
   -v "$STATE_DIR:/state" \
   -v "$ROOT_DIR:/workspace" \
@@ -105,4 +106,4 @@ docker run --rm --platform linux/arm64 \
     fi
 
     exec FEX /bin/bash -c 'WINEPREFIX=$WINEPREFIX WINEDEBUG=fixme-all $WINE_BIN $DEE_WIN_EXE $ARGS_Q'
-  "
+  " 2> >(grep -vFx "Fontconfig error: Cannot load default config file: No such file: (null)" >&2)
