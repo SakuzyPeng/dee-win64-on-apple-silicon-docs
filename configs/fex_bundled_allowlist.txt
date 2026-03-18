@@ -5,6 +5,7 @@
 # Manually amended after balanced regression diagnostics (dee.exe import set).
 
 /usr/lib/x86_64-linux-gnu/wine/x86_64-windows/advapi32.dll
+/usr/lib/x86_64-linux-gnu/wine/x86_64-windows/apisetschema.dll
 /usr/lib/x86_64-linux-gnu/wine/x86_64-windows/bcrypt.dll
 /usr/lib/x86_64-linux-gnu/wine/x86_64-windows/combase.dll
 /usr/lib/x86_64-linux-gnu/wine/x86_64-windows/coml2.dll
@@ -18,6 +19,12 @@
 /usr/lib/x86_64-linux-gnu/wine/x86_64-windows/kernelbase.dll
 /usr/lib/x86_64-linux-gnu/wine/x86_64-windows/msvcrt.dll
 /usr/lib/x86_64-linux-gnu/wine/x86_64-windows/mountmgr.sys
+/usr/lib/x86_64-linux-gnu/wine/x86_64-windows/mswsock.dll
+/usr/lib/x86_64-linux-gnu/wine/x86_64-windows/msvcp140.dll
+/usr/lib/x86_64-linux-gnu/wine/x86_64-windows/msvcp140_1.dll
+/usr/lib/x86_64-linux-gnu/wine/x86_64-windows/msvcp140_2.dll
+/usr/lib/x86_64-linux-gnu/wine/x86_64-windows/msvcp140_atomic_wait.dll
+/usr/lib/x86_64-linux-gnu/wine/x86_64-windows/msvcp140_codecvt_ids.dll
 /usr/lib/x86_64-linux-gnu/wine/x86_64-windows/newdev.dll
 /usr/lib/x86_64-linux-gnu/wine/x86_64-windows/ntdll.dll
 /usr/lib/x86_64-linux-gnu/wine/x86_64-windows/ntoskrnl.exe
@@ -36,6 +43,8 @@
 /usr/lib/x86_64-linux-gnu/wine/x86_64-windows/uxtheme.dll
 /usr/lib/x86_64-linux-gnu/wine/x86_64-windows/user32.dll
 /usr/lib/x86_64-linux-gnu/wine/x86_64-windows/userenv.dll
+/usr/lib/x86_64-linux-gnu/wine/x86_64-windows/vcruntime140_1.dll
+/usr/lib/x86_64-linux-gnu/wine/x86_64-windows/vcruntime140.dll
 /usr/lib/x86_64-linux-gnu/wine/x86_64-windows/win32u.dll
 /usr/lib/x86_64-linux-gnu/wine/x86_64-windows/wineboot.exe
 /usr/lib/x86_64-linux-gnu/wine/x86_64-windows/winedevice.exe

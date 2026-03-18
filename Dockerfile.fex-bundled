@@ -123,6 +123,7 @@ RUN set -eux; \
         { \
           printf '%s\n' \
             /usr/lib/x86_64-linux-gnu/wine/x86_64-windows/ntdll.dll \
+            /usr/lib/x86_64-linux-gnu/wine/x86_64-windows/apisetschema.dll \
             /usr/lib/x86_64-linux-gnu/wine/x86_64-windows/kernelbase.dll \
             /usr/lib/x86_64-linux-gnu/wine/x86_64-windows/kernel32.dll \
             /usr/lib/x86_64-linux-gnu/wine/x86_64-windows/user32.dll \
@@ -134,6 +135,14 @@ RUN set -eux; \
             /usr/lib/x86_64-linux-gnu/wine/x86_64-windows/advapi32.dll \
             /usr/lib/x86_64-linux-gnu/wine/x86_64-windows/sechost.dll \
             /usr/lib/x86_64-linux-gnu/wine/x86_64-windows/ws2_32.dll \
+            /usr/lib/x86_64-linux-gnu/wine/x86_64-windows/mswsock.dll \
+            /usr/lib/x86_64-linux-gnu/wine/x86_64-windows/msvcp140.dll \
+            /usr/lib/x86_64-linux-gnu/wine/x86_64-windows/msvcp140_1.dll \
+            /usr/lib/x86_64-linux-gnu/wine/x86_64-windows/msvcp140_2.dll \
+            /usr/lib/x86_64-linux-gnu/wine/x86_64-windows/msvcp140_atomic_wait.dll \
+            /usr/lib/x86_64-linux-gnu/wine/x86_64-windows/msvcp140_codecvt_ids.dll \
+            /usr/lib/x86_64-linux-gnu/wine/x86_64-windows/vcruntime140.dll \
+            /usr/lib/x86_64-linux-gnu/wine/x86_64-windows/vcruntime140_1.dll \
             /usr/lib/x86_64-linux-gnu/wine/x86_64-windows/shcore.dll \
             /usr/lib/x86_64-linux-gnu/wine/x86_64-windows/shlwapi.dll \
             /usr/lib/x86_64-linux-gnu/wine/x86_64-windows/shell32.dll \
