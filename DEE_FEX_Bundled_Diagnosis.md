@@ -156,13 +156,46 @@ Phase 1（`safe`）实测结果：
   - 功能闸门：`PASS`  
   - 镜像体积：`346MB`（约 `0.323 GiB`）
 
-更新后的建议：
+以上结论对应 `phase2-balanced-v2` 时点（历史里程碑）。
 
-- 默认建议可切到 `balanced`（`phase2-balanced-v2` 口径），在不牺牲功能/性能的前提下显著减小镜像。
+## 8. v3/v4 回归与收敛（2026-03-18 ~ 2026-03-19）
 
-默认脚本入口已切换到该口径：
+后续在“严格冷启动优先”的口径下继续推进：
 
-- `scripts/build_fex_bundled.sh` 默认 `BUNDLED_TRIM_LEVEL=balanced`，默认 `IMAGE_TAG=dee-fex-bundled:phase2-balanced-v2`
-- `scripts/run_dee_with_fex_bundled.sh` 默认镜像 `dee-fex-bundled:phase2-balanced-v2`
-- `scripts/benchmark_fex_bundled_gate.sh` 默认镜像 `dee-fex-bundled:phase2-balanced-v2`
-- 本地兼容别名可指向同一镜像：`dee-fex-bundled:phase2-balanced -> phase2-balanced-v2`
+1. v3 阶段暴露冷启动回归（远端机更容易复现）  
+   - 典型日志：`load_apiset_dll failed ... c000000f`、`failed to open ... syswow64\\rundll32.exe: c0000135`。  
+   - 现象：部分场景 `--help` 可能看似可用，但严格冷启动 gate 失败。
+
+2. 根因与修复  
+   - 根因：`balanced` allowlist 过度裁剪，误伤了冷启动关键 builtin/依赖。  
+   - 修复：回补关键 wine builtins 与启动路径（提交：`2b8e545`，`fix(fex-bundled): restore critical wine builtins for balanced trim`）。  
+   - 随后将默认入口统一切到 `v4`（提交：`3e0c213`，`docs/scripts: switch fex-bundled defaults to phase2-balanced-v4`）。
+
+3. v4 验证结果（当前稳定口径）  
+   - 严格冷启动检查：以全新 `WINEPREFIX` 运行，`exit=0`。  
+   - 远端真实编码（`ADM -> AC4`）通过：  
+     - `ENCODE_RC=0`  
+     - `Overall progress: 100.0`  
+     - `Job execution took 473 seconds (0h7m53s)`  
+     - 输出：`ADM_ac4_default.ac4`（约 `6.0MB`）  
+     - 监控峰值：`Max MEM usage in system: 984 MB`
+
+4. 包与标签收敛  
+   - `phase2-balanced-v3` 已从 GHCR 删除。  
+   - 当前仅保留并维护：`phase2-balanced-v4` + 稳定别名 `phase2-balanced`（指向 `v4`）。
+
+## 9. 当前默认与建议
+
+当前脚本默认已切到 `v4`：
+
+- `scripts/build_fex_bundled.sh`：默认 `BUNDLED_TRIM_LEVEL=balanced`，默认 `IMAGE_TAG=dee-fex-bundled:phase2-balanced-v4`
+- `scripts/run_dee_with_fex_bundled.sh`：默认镜像 `dee-fex-bundled:phase2-balanced-v4`
+- `scripts/benchmark_fex_bundled_gate.sh`：默认镜像 `dee-fex-bundled:phase2-balanced-v4`
+- `scripts/check_fex_bundled_cold_start.sh`：默认镜像 `dee-fex-bundled:phase2-balanced-v4`
+- 稳定别名：`dee-fex-bundled:phase2-balanced -> phase2-balanced-v4`
+
+建议流程：
+
+1. 每次变更先跑严格冷启动 gate（全新 `STATE_DIR/WINEPREFIX`）。  
+2. 再跑真实编码（至少一条 `ADM -> Atmos/AC4`）。  
+3. 通过后再更新默认标签或文档口径。
