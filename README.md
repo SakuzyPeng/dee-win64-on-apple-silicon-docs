@@ -13,7 +13,7 @@ English README: [README.en.md](./README.en.md)
 > GitHub Packages 页面会显示仓库 README；请按下列镜像入口选择对应路线。
 > 兼容性说明（全局）：已实测兼容 Dolby Media Encoder（GUI）内置 CLI 子集（`dee_ddpjoc_encoder.exe`、`dee_ddp_encoder.exe`、`dee_convert_sample_rate.exe`、`mp4muxer.exe`、`mp4demuxer.exe`），覆盖 Box64/FEX/Rosetta2 容器与非容器 `wine64`；不代表 Dolby Media Encoder 全部工具均已验证。
 
-### 路线体积快速矩阵（2026-03-18）
+### 路线体积快速矩阵（2026-03-19）
 
 | 路线 | 推荐镜像 | 平台 | 本地镜像体积（`docker images`） | 压缩后体积（GHCR manifest） |
 | --- | --- | --- | --- | --- |
@@ -23,6 +23,7 @@ English README: [README.en.md](./README.en.md)
 | Rosetta 2（legacy） | `ghcr.io/sakuzypeng/dee-wine-minimal:legacy-rosetta2-latest` | `linux/amd64` | `442MB` | `116.1 MiB` |
 
 > 说明：压缩后体积按镜像 `manifest` 的 `config + layers` 大小汇总；实际拉取流量会受 layer 复用与本地缓存影响。
+> 统计口径：`本地镜像体积` 来自 `docker images`；`压缩后体积` 来自 GHCR `manifest`（按目标平台汇总）。
 
 ### 1) FEX 路线（降低对 Rosetta 2 的依赖）
 

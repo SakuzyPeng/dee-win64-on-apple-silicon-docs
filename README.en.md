@@ -15,7 +15,7 @@ Note: the `FEX` container track is used to reduce dependency on `Rosetta 2` and 
 > GitHub Packages renders the repository README; use the image-specific entry points below.
 > Compatibility note (global): validated with a Dolby Media Encoder (GUI) built-in CLI subset (`dee_ddpjoc_encoder.exe`, `dee_ddp_encoder.exe`, `dee_convert_sample_rate.exe`, `mp4muxer.exe`, `mp4demuxer.exe`) across Box64/FEX/Rosetta2 containers and non-container `wine64`; this is not a claim that all Dolby Media Encoder tools are fully verified.
 
-### Route Size Matrix (2026-03-18)
+### Route Size Matrix (2026-03-19)
 
 | Track | Recommended image | Platform | Local image size (`docker images`) | Compressed size (GHCR manifest) |
 | --- | --- | --- | --- | --- |
@@ -25,6 +25,7 @@ Note: the `FEX` container track is used to reduce dependency on `Rosetta 2` and 
 | Rosetta 2 (legacy) | `ghcr.io/sakuzypeng/dee-wine-minimal:legacy-rosetta2-latest` | `linux/amd64` | `442MB` | `116.1 MiB` |
 
 > Note: compressed size is computed as `config + layers` from image manifest; real pull traffic depends on layer reuse and local cache.
+> Measurement method: `Local image size` is from `docker images`; `Compressed size` is from GHCR manifest summed for the target platform.
 
 ### 1) FEX track (reduce dependency on Rosetta 2)
 
