@@ -219,3 +219,21 @@ Phase 1（`safe`）实测结果：
    - 远端 digest：`sha256:86186fcb4c0f7006ed4144bd06d05fd451e1eb03838112baee89e10efec51850`  
    - 本地镜像体积（`docker images`）：`356MB`  
    - 压缩后体积（GHCR manifest，`config + layers`）：`116.67 MiB`
+
+## 11. 复盘修正（2026-03-19，晚）
+
+1. 新结论（覆盖 10 节的“cmd.exe 最小集合”结论）  
+   - direct MP4 崩溃并非 `v5` 镜像内文件集合回归，而是**旧 `STATE_DIR` 下 WinePrefix 残留污染**。  
+   - 同一镜像、同一 JSON、同一素材：  
+     - 旧 `tmp_fex_bundled_state`：可稳定复现 `Access violation` / `Application exits with error code: 11`。  
+     - 全新状态目录：稳定通过，`output.mp4` 生成且 `ffprobe` 为 `ac4 / 48000`。  
+   - 清空旧 `tmp_fex_bundled_state` 后，原始全长任务（非 10 秒）也恢复 `RC=0` 并成功直出 MP4。
+
+2. 防复发修复  
+   - `scripts/run_dee_with_fex_bundled.sh` 新增镜像指纹防护：  
+     - 记录当前镜像身份（优先 `RepoDigest`，回退 `Image ID`）到  
+       `STATE_DIR/.dee_fex_bundled_meta/image_ref.txt`。  
+     - 若检测到镜像身份变化，则自动重建对应 `WINEPREFIX`，避免沿用旧前缀。  
+   - 新增可控开关：  
+     - `AUTO_RESET_PREFIX_ON_IMAGE_CHANGE=1`（默认开启）  
+     - `RESET_WINEPREFIX=1`（强制单次重建）

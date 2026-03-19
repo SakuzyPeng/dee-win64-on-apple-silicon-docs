@@ -15,6 +15,8 @@ DEE_DIR="${DEE_DIR:-$ROOT_DIR/dolby_encoding_engine}"
 STATE_DIR="${STATE_DIR:-$ROOT_DIR/tmp_fex_bundled_state}"
 WINEPREFIX="${WINEPREFIX:-/state/WinePrefixes/dee}"
 WINEBOOT_TIMEOUT="${WINEBOOT_TIMEOUT:-120}"
+AUTO_RESET_PREFIX_ON_IMAGE_CHANGE="${AUTO_RESET_PREFIX_ON_IMAGE_CHANGE:-1}"
+RESET_WINEPREFIX="${RESET_WINEPREFIX:-0}"
 FEX_ROOTFS_IN_IMAGE="/root/.fex-emu/RootFS/Ubuntu_24_04"
 WINE_BIN="${WINE_BIN:-/usr/lib/wine/wine64}"
 DEE_WIN_EXE="${DEE_WIN_EXE:-y:/dolby_encoding_engine/dee.exe}"
@@ -59,6 +61,23 @@ prepare_workspace_dirs_from_args() {
   done
 }
 
+resolve_image_identity() {
+  local repo_digest image_id
+  repo_digest="$(docker image inspect "$IMAGE_TAG" --format '{{index .RepoDigests 0}}' 2>/dev/null || true)"
+  if [[ -n "$repo_digest" && "$repo_digest" != "<no value>" ]]; then
+    printf '%s\n' "$repo_digest"
+    return 0
+  fi
+
+  image_id="$(docker image inspect "$IMAGE_TAG" --format '{{.Id}}' 2>/dev/null || true)"
+  if [[ -n "$image_id" && "$image_id" != "<no value>" ]]; then
+    printf '%s\n' "$image_id"
+    return 0
+  fi
+
+  return 1
+}
+
 if [[ ! -d "$DEE_DIR" ]]; then
   echo "DEE directory not found: $DEE_DIR" >&2
   exit 1
@@ -73,6 +92,40 @@ mkdir -p "$STATE_DIR"
 
 if [[ $# -eq 0 ]]; then
   set -- --help
+fi
+
+HOST_PREFIX_PATH=""
+if [[ "$WINEPREFIX" == /state/* ]]; then
+  HOST_PREFIX_PATH="$STATE_DIR/${WINEPREFIX#/state/}"
+fi
+
+STATE_META_DIR="$STATE_DIR/.dee_fex_bundled_meta"
+STATE_IMAGE_MARKER="$STATE_META_DIR/image_ref.txt"
+CURRENT_IMAGE_IDENTITY=""
+if CURRENT_IMAGE_IDENTITY="$(resolve_image_identity)"; then
+  mkdir -p "$STATE_META_DIR"
+fi
+
+if [[ "$RESET_WINEPREFIX" == "1" ]]; then
+  if [[ -n "$HOST_PREFIX_PATH" ]]; then
+    echo "Resetting bundled WinePrefix due to RESET_WINEPREFIX=1: $HOST_PREFIX_PATH" >&2
+    rm -rf "$HOST_PREFIX_PATH"
+  fi
+elif [[ "$AUTO_RESET_PREFIX_ON_IMAGE_CHANGE" == "1" && -n "$HOST_PREFIX_PATH" && -n "$CURRENT_IMAGE_IDENTITY" ]]; then
+  PREV_IMAGE_IDENTITY=""
+  if [[ -f "$STATE_IMAGE_MARKER" ]]; then
+    PREV_IMAGE_IDENTITY="$(cat "$STATE_IMAGE_MARKER")"
+  fi
+  if [[ -n "$PREV_IMAGE_IDENTITY" && "$PREV_IMAGE_IDENTITY" != "$CURRENT_IMAGE_IDENTITY" ]]; then
+    echo "Image changed; resetting bundled WinePrefix to avoid stale runtime state." >&2
+    echo "  previous: $PREV_IMAGE_IDENTITY" >&2
+    echo "  current : $CURRENT_IMAGE_IDENTITY" >&2
+    rm -rf "$HOST_PREFIX_PATH"
+  fi
+fi
+
+if [[ -n "$CURRENT_IMAGE_IDENTITY" ]]; then
+  printf '%s\n' "$CURRENT_IMAGE_IDENTITY" > "$STATE_IMAGE_MARKER"
 fi
 
 ARGS=("$@")
