@@ -148,6 +148,7 @@ RUN set -eux; \
             /usr/lib/x86_64-linux-gnu/wine/x86_64-windows/shell32.dll \
             /usr/lib/x86_64-linux-gnu/wine/x86_64-windows/combase.dll \
             /usr/lib/x86_64-linux-gnu/wine/x86_64-windows/comctl32.dll \
+            /usr/lib/x86_64-linux-gnu/wine/x86_64-windows/cmd.exe \
             /usr/lib/x86_64-linux-gnu/wine/x86_64-windows/ntoskrnl.exe \
             /usr/lib/x86_64-linux-gnu/wine/x86_64-windows/mountmgr.sys \
             /usr/lib/x86_64-linux-gnu/wine/x86_64-windows/wineboot.exe \

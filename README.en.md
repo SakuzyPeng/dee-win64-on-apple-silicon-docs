@@ -19,7 +19,7 @@ Note: the `FEX` container track is used to reduce dependency on `Rosetta 2` and 
 
 | Track | Recommended image | Platform | Local image size (`docker images`) | Compressed size (GHCR manifest) |
 | --- | --- | --- | --- | --- |
-| FEX Bundled (Embedded RootFS) | `ghcr.io/sakuzypeng/dee-fex-bundled:phase2-balanced-v4` | `linux/arm64` | `354MB` | `116.2 MiB` |
+| FEX Bundled (Embedded RootFS) | `ghcr.io/sakuzypeng/dee-fex-bundled:phase2-balanced-v5` | `linux/arm64` | `356MB` | `116.7 MiB` |
 | Box64 | `ghcr.io/sakuzypeng/dee-box64-lab:latest` | `linux/arm64` | `773MB` | `226.3 MiB` |
 | Rosetta 2 (legacy) | `ghcr.io/sakuzypeng/dee-wine-minimal:legacy-rosetta2-latest` | `linux/amd64` | `442MB` | `116.1 MiB` |
 
@@ -30,15 +30,15 @@ Note: the `FEX` container track is used to reduce dependency on `Rosetta 2` and 
 ### 1) FEX Bundled (embedded RootFS, primary recommendation)
 
 - Images:
-  - `ghcr.io/sakuzypeng/dee-fex-bundled:phase2-balanced-v4`
-  - `ghcr.io/sakuzypeng/dee-fex-bundled:phase2-balanced` (stable alias, currently points to `v4`)
+  - `ghcr.io/sakuzypeng/dee-fex-bundled:phase2-balanced-v5`
+  - `ghcr.io/sakuzypeng/dee-fex-bundled:phase2-balanced` (stable alias, currently points to `v5`)
 - Pull:
   ```bash
-  docker pull ghcr.io/sakuzypeng/dee-fex-bundled:phase2-balanced-v4
+  docker pull ghcr.io/sakuzypeng/dee-fex-bundled:phase2-balanced-v5
   ```
 - Quick smoke test:
   ```bash
-  IMAGE_TAG=ghcr.io/sakuzypeng/dee-fex-bundled:phase2-balanced-v4 ./scripts/run_dee_with_fex_bundled.sh --help
+  IMAGE_TAG=ghcr.io/sakuzypeng/dee-fex-bundled:phase2-balanced-v5 ./scripts/run_dee_with_fex_bundled.sh --help
   ```
 - Diagnosis and regression notes: [DEE_FEX_Bundled_Diagnosis.md](./DEE_FEX_Bundled_Diagnosis.md)
 - Historical experiment record (external RootFS): [DEE_Docker_FEX_Experiment.en.md](./DEE_Docker_FEX_Experiment.en.md)

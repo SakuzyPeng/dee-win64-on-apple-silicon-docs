@@ -7,7 +7,7 @@ ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 
 IMAGE_TAG="${IMAGE_TAG:-dee-fex-bundled:phase1-safe}"
 PLATFORM="${PLATFORM:-linux/arm64}"
-MODE="${MODE:-both}" # help | encode | both
+MODE="${MODE:-both}" # help | encode | mp4_direct | both
 STATE_DIR="${STATE_DIR:-$ROOT_DIR/tmp_fex_bundled_allowlist/state}"
 OUT_DIR="${OUT_DIR:-$ROOT_DIR/tmp_fex_bundled_allowlist/out}"
 ALLOWLIST_OUT="${ALLOWLIST_OUT:-$ROOT_DIR/configs/fex_bundled_allowlist.txt}"
@@ -27,7 +27,7 @@ Usage:
 
 Options:
   --image TAG             bundled image tag (default: dee-fex-bundled:phase1-safe)
-  --mode MODE             help|encode|both (default: both)
+  --mode MODE             help|encode|mp4_direct|both (default: both)
   --state-dir DIR         state directory
   --out-dir DIR           trace output directory
   --allowlist-out FILE    output builtin allowlist file
@@ -95,9 +95,9 @@ ALLOWLIST_OUT="$(to_abs_path "$ALLOWLIST_OUT")"
 AGGRESSIVE_OUT="$(to_abs_path "$AGGRESSIVE_OUT")"
 
 case "$MODE" in
-  help|encode|both) ;;
+  help|encode|mp4_direct|both) ;;
   *)
-    echo "Invalid --mode: $MODE (expected help|encode|both)" >&2
+    echo "Invalid --mode: $MODE (expected help|encode|mp4_direct|both)" >&2
     exit 2
     ;;
 esac
@@ -123,7 +123,7 @@ if [[ "$MODE" != "help" ]] && [[ ! -f "$ROOT_DIR/testADM.wav" ]]; then
 fi
 
 mkdir -p "$STATE_DIR" "$OUT_DIR" "$(dirname "$ALLOWLIST_OUT")" "$(dirname "$AGGRESSIVE_OUT")"
-rm -f "$OUT_DIR"/help_cold.trace* "$OUT_DIR"/encode.trace* "$OUT_DIR"/*.log
+rm -f "$OUT_DIR"/help_cold.trace* "$OUT_DIR"/encode.trace* "$OUT_DIR"/mp4_direct.trace* "$OUT_DIR"/*.log
 
 run_trace_case() {
   local case_name="$1"
@@ -187,12 +187,101 @@ encode_args=(
 )
 encode_args_q="$(printf '%q ' "${encode_args[@]}")"
 
+mp4_direct_json="$OUT_DIR/probe.mp4.direct.json"
+cat > "$mp4_direct_json" <<'EOF'
+{
+  "job_config": {
+    "filter": {
+      "audio": {
+        "encode_to_ims_ac4": {
+          "-version": "1",
+          "ac4_frame_rate": "native",
+          "append_silence_duration": "0",
+          "data_rate": 256,
+          "drc": {
+            "ddp_drc_profile": "film_light",
+            "flat_panel_drc_profile": "film_light",
+            "home_theatre_drc_profile": "film_light",
+            "portable_hp_drc_profile": "film_light",
+            "portable_spkr_drc_profile": "film_light"
+          },
+          "encoding_profile": "ims",
+          "end": "end_of_file",
+          "iframe_interval": 0,
+          "ims_legacy_presentation": false,
+          "language": "",
+          "loudness": {
+            "measure_only": {
+              "dialogue_intelligence": true,
+              "metering_mode": "1770-4",
+              "speech_threshold": 15
+            }
+          },
+          "prepend_silence_duration": "0",
+          "start": "first_frame_of_action",
+          "time_base": "file_position",
+          "timecode_frame_rate": "not_indicated"
+        }
+      }
+    },
+    "input": {
+      "audio": {
+        "atmos_mezz": {
+          "-version": "1",
+          "ffoa": "auto",
+          "file_name": "testADM.wav",
+          "offset": "auto",
+          "storage": {
+            "local": {
+              "path": "\"Y:/.\""
+            }
+          },
+          "timecode_frame_rate": "not_indicated"
+        }
+      }
+    },
+    "misc": {
+      "temp_dir": {
+        "clean_temp": "true",
+        "path": "\"Y:/tmp_fex_bundled_allowlist/out/tmp_mp4\""
+      }
+    },
+    "output": {
+      "mp4": {
+        "-version": "1",
+        "file_name": "probe.mp4",
+        "fill_video": false,
+        "output_format": "mp4",
+        "override_frame_rate": "no",
+        "storage": {
+          "local": {
+            "path": "\"Y:/tmp_fex_bundled_allowlist/out\""
+          }
+        }
+      }
+    }
+  }
+}
+EOF
+
+mp4_direct_args=(
+  --json "y:/tmp_fex_bundled_allowlist/out/probe.mp4.direct.json"
+  --log-file "y:/tmp_fex_bundled_allowlist/out/probe.mp4.direct.log"
+  --stdout
+  --verbose info
+)
+mp4_direct_args_q="$(printf '%q ' "${mp4_direct_args[@]}")"
+
 if [[ "$MODE" == "help" || "$MODE" == "both" ]]; then
   run_trace_case "help_cold" "$help_args_q" "1"
 fi
 
 if [[ "$MODE" == "encode" || "$MODE" == "both" ]]; then
   run_trace_case "encode" "$encode_args_q" "0"
+fi
+
+if [[ "$MODE" == "mp4_direct" || "$MODE" == "both" ]]; then
+  run_trace_case "mp4_direct" "$mp4_direct_args_q" "0"
 fi
 
 if ! ls "$OUT_DIR"/*.trace* >/dev/null 2>&1; then
@@ -211,6 +300,11 @@ awk -v rootfs="$ROOTFS_PATH_IN_IMAGE" '
   {
     p = $0
     if (index(p, rootfs) == 1) sub("^" rootfs, "", p)
+    if (match(p, /\/state\/WinePrefixes\/[^/]+\/drive_c\/windows\/system32\/[^/]+$/)) {
+      n = split(p, parts, "/")
+      print "/usr/lib/x86_64-linux-gnu/wine/x86_64-windows/" parts[n]
+      next
+    }
     if (index(p, "/usr/lib/x86_64-linux-gnu/wine/x86_64-windows/") == 1) print p
   }
 ' "$RAW_PATHS" | sort -u > "$AUTO_BUILTINS"
@@ -250,6 +344,7 @@ trap 'rm -f "$TMP_BUILTINS" "$TMP_SO"' EXIT
 /usr/lib/x86_64-linux-gnu/wine/x86_64-windows/shell32.dll
 /usr/lib/x86_64-linux-gnu/wine/x86_64-windows/combase.dll
 /usr/lib/x86_64-linux-gnu/wine/x86_64-windows/comctl32.dll
+/usr/lib/x86_64-linux-gnu/wine/x86_64-windows/cmd.exe
 /usr/lib/x86_64-linux-gnu/wine/x86_64-windows/ntoskrnl.exe
 /usr/lib/x86_64-linux-gnu/wine/x86_64-windows/mountmgr.sys
 /usr/lib/x86_64-linux-gnu/wine/x86_64-windows/wineboot.exe

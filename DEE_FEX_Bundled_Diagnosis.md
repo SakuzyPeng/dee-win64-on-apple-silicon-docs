@@ -182,20 +182,40 @@ Phase 1（`safe`）实测结果：
 
 4. 包与标签收敛  
    - `phase2-balanced-v3` 已从 GHCR 删除。  
-   - 当前仅保留并维护：`phase2-balanced-v4` + 稳定别名 `phase2-balanced`（指向 `v4`）。
+   - 在 `v5` 发布前仅保留并维护：`phase2-balanced-v4` + 稳定别名 `phase2-balanced`（指向 `v4`）。
 
 ## 9. 当前默认与建议
 
-当前脚本默认已切到 `v4`：
+当前脚本默认已切到 `v5`：
 
-- `scripts/build_fex_bundled.sh`：默认 `BUNDLED_TRIM_LEVEL=balanced`，默认 `IMAGE_TAG=dee-fex-bundled:phase2-balanced-v4`
-- `scripts/run_dee_with_fex_bundled.sh`：默认镜像 `dee-fex-bundled:phase2-balanced-v4`
-- `scripts/benchmark_fex_bundled_gate.sh`：默认镜像 `dee-fex-bundled:phase2-balanced-v4`
-- `scripts/check_fex_bundled_cold_start.sh`：默认镜像 `dee-fex-bundled:phase2-balanced-v4`
-- 稳定别名：`dee-fex-bundled:phase2-balanced -> phase2-balanced-v4`
+- `scripts/build_fex_bundled.sh`：默认 `BUNDLED_TRIM_LEVEL=balanced`，默认 `IMAGE_TAG=dee-fex-bundled:phase2-balanced-v5`
+- `scripts/run_dee_with_fex_bundled.sh`：默认镜像 `dee-fex-bundled:phase2-balanced-v5`
+- `scripts/benchmark_fex_bundled_gate.sh`：默认镜像 `dee-fex-bundled:phase2-balanced-v5`
+- `scripts/check_fex_bundled_cold_start.sh`：默认镜像 `dee-fex-bundled:phase2-balanced-v5`
+- 稳定别名：`dee-fex-bundled:phase2-balanced -> phase2-balanced-v5`
 
 建议流程：
 
 1. 每次变更先跑严格冷启动 gate（全新 `STATE_DIR/WINEPREFIX`）。  
 2. 再跑真实编码（至少一条 `ADM -> Atmos/AC4`）。  
 3. 通过后再更新默认标签或文档口径。
+
+## 10. v5 发布记录（2026-03-19）
+
+1. 问题归因与最小回补  
+   - 现象：`phase2-balanced-v4` 在 `dee.exe --json ...` direct MP4 输出阶段崩溃，典型为 `Unhandled exception code c0000409`。  
+   - 对照：`safe-trim` 路线可通过 direct MP4，但镜像约 `921MB`，不满足体积目标。  
+   - 结论：最小必要回补集合收敛到 `cmd.exe`（`/usr/lib/x86_64-linux-gnu/wine/x86_64-windows/cmd.exe`）。
+
+2. 工程化修复  
+   - `capture_fex_bundled_allowlist.sh` 新增 `mp4_direct` 采集模式，并补齐 `WinePrefix/system32 -> builtin` 映射。  
+   - `configs/fex_bundled_allowlist.txt` 与 `Dockerfile.fex-bundled` 的 `balanced` keep 集均加入 `cmd.exe`。  
+   - `benchmark_fex_bundled_gate.sh` 纳入 direct MP4 功能检查与 `ffprobe`（AC4）验收。
+
+3. 发布与体积  
+   - 发布标签：`ghcr.io/sakuzypeng/dee-fex-bundled:phase2-balanced-v5`  
+   - 稳定别名：`ghcr.io/sakuzypeng/dee-fex-bundled:phase2-balanced`（已切到 `v5`）  
+   - 追溯标签：`ghcr.io/sakuzypeng/dee-fex-bundled:phase2-balanced-v5-cmdfix`  
+   - 远端 digest：`sha256:86186fcb4c0f7006ed4144bd06d05fd451e1eb03838112baee89e10efec51850`  
+   - 本地镜像体积（`docker images`）：`356MB`  
+   - 压缩后体积（GHCR manifest，`config + layers`）：`116.67 MiB`

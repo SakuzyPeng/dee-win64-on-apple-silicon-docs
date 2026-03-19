@@ -7,6 +7,7 @@
 /usr/lib/x86_64-linux-gnu/wine/x86_64-windows/advapi32.dll
 /usr/lib/x86_64-linux-gnu/wine/x86_64-windows/apisetschema.dll
 /usr/lib/x86_64-linux-gnu/wine/x86_64-windows/bcrypt.dll
+/usr/lib/x86_64-linux-gnu/wine/x86_64-windows/cmd.exe
 /usr/lib/x86_64-linux-gnu/wine/x86_64-windows/combase.dll
 /usr/lib/x86_64-linux-gnu/wine/x86_64-windows/coml2.dll
 /usr/lib/x86_64-linux-gnu/wine/x86_64-windows/comctl32.dll

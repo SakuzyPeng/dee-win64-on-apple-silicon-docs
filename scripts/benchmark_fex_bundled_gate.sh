@@ -5,7 +5,7 @@ set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 
-IMAGE_TAG="${IMAGE_TAG:-dee-fex-bundled:phase2-balanced-v4}"
+IMAGE_TAG="${IMAGE_TAG:-dee-fex-bundled:phase2-balanced-v5}"
 RUNS="${RUNS:-3}"
 STATE_DIR="${STATE_DIR:-$ROOT_DIR/tmp_fex_bundled_state_bench}"
 WINEPREFIX="${WINEPREFIX:-/state/WinePrefixes/bench_fex_bundled}"
@@ -36,7 +36,7 @@ Usage:
   scripts/benchmark_fex_bundled_gate.sh [options]
 
 Options:
-  --image TAG      bundled image tag (default: dee-fex-bundled:phase2-balanced-v4)
+  --image TAG      bundled image tag (default: dee-fex-bundled:phase2-balanced-v5)
   --runs N         encode runs (default: 3)
   --state-dir DIR  benchmark state directory
   -h, --help       show help
@@ -132,6 +132,87 @@ add_result() {
     >> "$RESULTS_TSV"
 }
 
+write_mp4_direct_job() {
+  local job_json="$1"
+  local out_dir_win="$2"
+  local temp_dir_win="$3"
+  cat > "$job_json" <<EOF
+{
+  "job_config": {
+    "filter": {
+      "audio": {
+        "encode_to_ims_ac4": {
+          "-version": "1",
+          "ac4_frame_rate": "native",
+          "append_silence_duration": "0",
+          "data_rate": 256,
+          "drc": {
+            "ddp_drc_profile": "film_light",
+            "flat_panel_drc_profile": "film_light",
+            "home_theatre_drc_profile": "film_light",
+            "portable_hp_drc_profile": "film_light",
+            "portable_spkr_drc_profile": "film_light"
+          },
+          "encoding_profile": "ims",
+          "end": "end_of_file",
+          "iframe_interval": 0,
+          "ims_legacy_presentation": false,
+          "language": "",
+          "loudness": {
+            "measure_only": {
+              "dialogue_intelligence": true,
+              "metering_mode": "1770-4",
+              "speech_threshold": 15
+            }
+          },
+          "prepend_silence_duration": "0",
+          "start": "first_frame_of_action",
+          "time_base": "file_position",
+          "timecode_frame_rate": "not_indicated"
+        }
+      }
+    },
+    "input": {
+      "audio": {
+        "atmos_mezz": {
+          "-version": "1",
+          "ffoa": "auto",
+          "file_name": "testADM.wav",
+          "offset": "auto",
+          "storage": {
+            "local": {
+              "path": "\"y:/\""
+            }
+          },
+          "timecode_frame_rate": "not_indicated"
+        }
+      }
+    },
+    "misc": {
+      "temp_dir": {
+        "clean_temp": "true",
+        "path": "\"$temp_dir_win\""
+      }
+    },
+    "output": {
+      "mp4": {
+        "-version": "1",
+        "file_name": "output.mp4",
+        "fill_video": false,
+        "output_format": "mp4",
+        "override_frame_rate": "no",
+        "storage": {
+          "local": {
+            "path": "\"$out_dir_win\""
+          }
+        }
+      }
+    }
+  }
+}
+EOF
+}
+
 run_case() {
   local run_idx="$1"
   local case_name="$2"
@@ -163,6 +244,12 @@ run_case() {
   if [[ -n "$output_file" ]]; then
     if [[ -s "$output_file" ]]; then
       output_ok="1"
+      if [[ "$case_name" == "encode_adm_to_ac4_mp4_direct" ]] && command -v ffprobe >/dev/null 2>&1; then
+        codec_name="$(ffprobe -v error -select_streams a:0 -show_entries stream=codec_name -of default=nokey=1:noprint_wrappers=1 "$output_file" 2>/dev/null | head -n1 || true)"
+        if [[ "$codec_name" != "ac4" ]]; then
+          output_ok="0"
+        fi
+      fi
     else
       output_ok="0"
     fi
@@ -201,6 +288,16 @@ for run_idx in $(seq 1 "$RUNS"); do
     "$output_file"
 done
 
+mp4_case_dir="$RUN_DIR/mp4_direct_run1"
+mkdir -p "$mp4_case_dir/tmp"
+mp4_job_json="$mp4_case_dir/job.json"
+write_mp4_direct_job "$mp4_job_json" "y:/tmp_bench/$RUN_ID/mp4_direct_run1" "y:/tmp_bench/$RUN_ID/mp4_direct_run1/tmp"
+mp4_output_file="$mp4_case_dir/output.mp4"
+mp4_log_file="y:/tmp_bench/$RUN_ID/mp4_direct_run1/dee.log"
+run_case "1" "encode_adm_to_ac4_mp4_direct" \
+  "cd '$ROOT_DIR' && IMAGE_TAG='$IMAGE_TAG' STATE_DIR='$STATE_DIR' WINEPREFIX='$WINEPREFIX' '$ROOT_DIR/scripts/run_dee_with_fex_bundled.sh' --json 'y:/tmp_bench/$RUN_ID/mp4_direct_run1/job.json' --log-file '$mp4_log_file' --stdout --verbose info" \
+  "$mp4_output_file"
+
 encode_mean_real="$(
   awk -F'\t' '
     NR > 1 && $2 == "encode_adm_to_ec3" && $3 == "0" && $4 ~ /^[0-9]+([.][0-9]+)?$/ {
@@ -230,6 +327,7 @@ functional_fail_count="$(
     NR > 1 {
       if ($2 ~ /^help_/ && $3 != "0") fail++;
       if ($2 == "encode_adm_to_ec3" && ($3 != "0" || $11 != "1" || $12 != "1")) fail++;
+      if ($2 == "encode_adm_to_ac4_mp4_direct" && ($3 != "0" || $11 != "1" || $12 != "1")) fail++;
       if ($13 == "1") fail++;
     }
     END { print fail + 0 }

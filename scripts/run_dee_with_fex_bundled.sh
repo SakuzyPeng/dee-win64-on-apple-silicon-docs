@@ -10,7 +10,7 @@ set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 
-IMAGE_TAG="${IMAGE_TAG:-dee-fex-bundled:phase2-balanced-v4}"
+IMAGE_TAG="${IMAGE_TAG:-dee-fex-bundled:phase2-balanced-v5}"
 DEE_DIR="${DEE_DIR:-$ROOT_DIR/dolby_encoding_engine}"
 STATE_DIR="${STATE_DIR:-$ROOT_DIR/tmp_fex_bundled_state}"
 WINEPREFIX="${WINEPREFIX:-/state/WinePrefixes/dee}"

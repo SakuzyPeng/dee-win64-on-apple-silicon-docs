@@ -5,7 +5,7 @@ set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 
-BASE_IMAGE="${BASE_IMAGE:-dee-fex-bundled:phase2-balanced-v4}"
+BASE_IMAGE="${BASE_IMAGE:-dee-fex-bundled:phase2-balanced-v5}"
 PLATFORM="${PLATFORM:-linux/arm64}"
 RUNS="${RUNS:-1}"
 KEEP_IMAGES="${KEEP_IMAGES:-0}"
@@ -34,7 +34,7 @@ Usage:
   scripts/probe_fex_bundled_balanced_removals.sh [options]
 
 Options:
-  --base-image TAG   base balanced image tag (default: dee-fex-bundled:phase2-balanced-v4)
+  --base-image TAG   base balanced image tag (default: dee-fex-bundled:phase2-balanced-v5)
   --runs N           gate encode runs per probe (default: 1)
   --keep-images      keep derived probe images (default: remove)
   --out-dir DIR      output directory

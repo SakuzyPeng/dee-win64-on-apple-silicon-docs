@@ -17,7 +17,7 @@ English README: [README.en.md](./README.en.md)
 
 | 路线 | 推荐镜像 | 平台 | 本地镜像体积（`docker images`） | 压缩后体积（GHCR manifest） |
 | --- | --- | --- | --- | --- |
-| FEX Bundled（内嵌 RootFS） | `ghcr.io/sakuzypeng/dee-fex-bundled:phase2-balanced-v4` | `linux/arm64` | `354MB` | `116.2 MiB` |
+| FEX Bundled（内嵌 RootFS） | `ghcr.io/sakuzypeng/dee-fex-bundled:phase2-balanced-v5` | `linux/arm64` | `356MB` | `116.7 MiB` |
 | Box64 | `ghcr.io/sakuzypeng/dee-box64-lab:latest` | `linux/arm64` | `773MB` | `226.3 MiB` |
 | Rosetta 2（legacy） | `ghcr.io/sakuzypeng/dee-wine-minimal:legacy-rosetta2-latest` | `linux/amd64` | `442MB` | `116.1 MiB` |
 
@@ -28,15 +28,15 @@ English README: [README.en.md](./README.en.md)
 ### 1) FEX Bundled（内嵌 RootFS，主线推荐）
 
 - 镜像：
-  - `ghcr.io/sakuzypeng/dee-fex-bundled:phase2-balanced-v4`
-  - `ghcr.io/sakuzypeng/dee-fex-bundled:phase2-balanced`（稳定别名，当前指向 `v4`）
+  - `ghcr.io/sakuzypeng/dee-fex-bundled:phase2-balanced-v5`
+  - `ghcr.io/sakuzypeng/dee-fex-bundled:phase2-balanced`（稳定别名，当前指向 `v5`）
 - 拉取：
   ```bash
-  docker pull ghcr.io/sakuzypeng/dee-fex-bundled:phase2-balanced-v4
+  docker pull ghcr.io/sakuzypeng/dee-fex-bundled:phase2-balanced-v5
   ```
 - 最短自检：
   ```bash
-  IMAGE_TAG=ghcr.io/sakuzypeng/dee-fex-bundled:phase2-balanced-v4 ./scripts/run_dee_with_fex_bundled.sh --help
+  IMAGE_TAG=ghcr.io/sakuzypeng/dee-fex-bundled:phase2-balanced-v5 ./scripts/run_dee_with_fex_bundled.sh --help
   ```
 - 诊断与回归记录：[DEE_FEX_Bundled_Diagnosis.md](./DEE_FEX_Bundled_Diagnosis.md)
 - 历史实验记录（外置 RootFS）：[DEE_Docker_FEX_Experiment.md](./DEE_Docker_FEX_Experiment.md)
