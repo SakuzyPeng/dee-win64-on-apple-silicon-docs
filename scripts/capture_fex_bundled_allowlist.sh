@@ -328,6 +328,7 @@ trap 'rm -f "$TMP_BUILTINS" "$TMP_SO"' EXIT
   cat "$AUTO_BUILTINS"
   cat <<'KEEP_BUILTINS'
 /usr/lib/x86_64-linux-gnu/wine/x86_64-windows/ntdll.dll
+/usr/lib/x86_64-linux-gnu/wine/x86_64-windows/avrt.dll
 /usr/lib/x86_64-linux-gnu/wine/x86_64-windows/kernelbase.dll
 /usr/lib/x86_64-linux-gnu/wine/x86_64-windows/kernel32.dll
 /usr/lib/x86_64-linux-gnu/wine/x86_64-windows/user32.dll

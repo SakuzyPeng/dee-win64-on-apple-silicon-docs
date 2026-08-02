@@ -11,6 +11,9 @@ AUTO_NATIVE_MP4MUXER="${AUTO_NATIVE_MP4MUXER:-1}"
 
 IMAGE_TAG_BOX64="${IMAGE_TAG_BOX64:-dee-box64-lab:local}"
 IMAGE_TAG_FEX="${IMAGE_TAG_FEX:-dee-fex-lab:local}"
+IMAGE_TAG_FEX_BUNDLED="${IMAGE_TAG_FEX_BUNDLED:-ghcr.io/sakuzypeng/dee-fex-bundled:phase2-balanced}"
+DME_FEX_BUNDLED_STATE_DIR="${DME_FEX_BUNDLED_STATE_DIR:-$ROOT_DIR/tmp_fex_bundled_state_dme}"
+DME_FEX_BUNDLED_WINEPREFIX="${DME_FEX_BUNDLED_WINEPREFIX:-/state/WinePrefixes/dme_fex_bundled}"
 
 HOST_WINE_BIN="${HOST_WINE_BIN:-wine64}"
 HOST_WINEPREFIX="${HOST_WINEPREFIX:-$ROOT_DIR/tmp_host_wineprefix_dme}"
@@ -23,11 +26,12 @@ Usage:
   scripts/run_dme_cli.sh --tool <exe_name> [tool_args...]
 
 Modes:
-  DME_MODE=box64|fex|host   (default: box64)
+  DME_MODE=box64|fex|fex-bundled|host   (default: box64)
 
 Examples:
   DME_MODE=box64 scripts/run_dme_cli.sh --tool dee_ddpjoc_encoder.exe --help
   DME_MODE=fex scripts/run_dme_cli.sh --tool mp4muxer.exe --help
+  DME_MODE=fex-bundled scripts/run_dme_cli.sh --tool dee_ddpjoc_encoder.exe --help
   DME_MODE=host scripts/run_dme_cli.sh --tool dee_ddp_encoder.exe --help
 
 Native mp4muxer override:
@@ -169,6 +173,18 @@ case "$DME_MODE" in
     exec env IMAGE_TAG="$IMAGE_TAG_FEX" DEE_WIN_EXE="y:/dme_encoder/$TOOL_NAME" \
       "$ROOT_DIR/scripts/run_dee_with_fex.sh" "$@"
     ;;
+  fex-bundled)
+    prepare_dirs_from_args "$@"
+    exec env \
+      IMAGE_TAG="$IMAGE_TAG_FEX_BUNDLED" \
+      DEE_DIR="$DME_DIR" \
+      DEE_HOST_EXE="$DME_DIR/$TOOL_NAME" \
+      WORKSPACE_TOOL_SUBDIR="dme_encoder" \
+      DEE_WIN_EXE="y:/dme_encoder/$TOOL_NAME" \
+      STATE_DIR="$DME_FEX_BUNDLED_STATE_DIR" \
+      WINEPREFIX="$DME_FEX_BUNDLED_WINEPREFIX" \
+      "$ROOT_DIR/scripts/run_dee_with_fex_bundled.sh" "$@"
+    ;;
   host)
     if ! command -v "$HOST_WINE_BIN" >/dev/null 2>&1; then
       echo "Host wine binary not found: $HOST_WINE_BIN" >&2
@@ -190,7 +206,7 @@ case "$DME_MODE" in
     ;;
   *)
     echo "Unsupported DME_MODE: $DME_MODE" >&2
-    echo "Use one of: box64, fex, host" >&2
+    echo "Use one of: box64, fex, fex-bundled, host" >&2
     exit 2
     ;;
 esac

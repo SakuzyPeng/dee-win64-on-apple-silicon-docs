@@ -13,11 +13,11 @@ English README: [README.en.md](./README.en.md)
 > GitHub Packages 页面会显示仓库 README；请按下列镜像入口选择对应路线。
 > 兼容性说明（全局）：已实测兼容 Dolby Media Encoder（GUI）内置 CLI 子集（`dee_ddpjoc_encoder.exe`、`dee_ddp_encoder.exe`、`dee_convert_sample_rate.exe`、`mp4muxer.exe`、`mp4demuxer.exe`），覆盖 Box64/FEX/Rosetta2 容器与非容器 `wine64`；不代表 Dolby Media Encoder 全部工具均已验证。
 
-### 路线体积快速矩阵（2026-03-19）
+### 路线体积快速矩阵（2026-08-02）
 
 | 路线 | 推荐镜像 | 平台 | 本地镜像体积（`docker images`） | 压缩后体积（GHCR manifest） |
 | --- | --- | --- | --- | --- |
-| FEX Bundled（内嵌 RootFS） | `ghcr.io/sakuzypeng/dee-fex-bundled:phase2-balanced-v5` | `linux/arm64` | `356MB` | `116.7 MiB` |
+| FEX Bundled（内嵌 RootFS） | `ghcr.io/sakuzypeng/dee-fex-bundled:phase2-balanced-v6` | `linux/arm64` | `441MB` | `142.6 MiB` |
 | Box64 | `ghcr.io/sakuzypeng/dee-box64-lab:latest` | `linux/arm64` | `773MB` | `226.3 MiB` |
 | Rosetta 2（legacy） | `ghcr.io/sakuzypeng/dee-wine-minimal:legacy-rosetta2-latest` | `linux/amd64` | `442MB` | `116.1 MiB` |
 
@@ -28,15 +28,24 @@ English README: [README.en.md](./README.en.md)
 ### 1) FEX Bundled（内嵌 RootFS，主线推荐）
 
 - 镜像：
-  - `ghcr.io/sakuzypeng/dee-fex-bundled:phase2-balanced-v5`
-  - `ghcr.io/sakuzypeng/dee-fex-bundled:phase2-balanced`（稳定别名，当前指向 `v5`）
+  - `ghcr.io/sakuzypeng/dee-fex-bundled:phase2-balanced-v6`
+  - `ghcr.io/sakuzypeng/dee-fex-bundled:phase2-balanced`（稳定别名，当前指向 `v6`）
 - 拉取：
   ```bash
-  docker pull ghcr.io/sakuzypeng/dee-fex-bundled:phase2-balanced-v5
+  docker pull ghcr.io/sakuzypeng/dee-fex-bundled:phase2-balanced-v6
   ```
 - 最短自检：
   ```bash
-  IMAGE_TAG=ghcr.io/sakuzypeng/dee-fex-bundled:phase2-balanced-v5 ./scripts/run_dee_with_fex_bundled.sh --help
+  IMAGE_TAG=ghcr.io/sakuzypeng/dee-fex-bundled:phase2-balanced-v6 ./scripts/run_dee_with_fex_bundled.sh --help
+  ```
+- v6 回补 DME 所需的 Wine `avrt.dll`，并内置小型诊断工具集：
+  `mediainfo`、`file`、`binutils`、`xxd`、`jq`、`ripgrep`、
+  `python3-minimal`、`strace`、`lsof`、`curl`、`patchelf` 及常用解压工具。
+  未加入完整 FFmpeg、GDB、编译器或 `pip`。
+- 运行时载荷自检：
+  ```bash
+  IMAGE_TAG=ghcr.io/sakuzypeng/dee-fex-bundled:phase2-balanced-v6 \
+    ./scripts/check_fex_bundled_payload.sh
   ```
 - 诊断与回归记录：[DEE_FEX_Bundled_Diagnosis.md](./DEE_FEX_Bundled_Diagnosis.md)
 - 历史实验记录（外置 RootFS）：[DEE_Docker_FEX_Experiment.md](./DEE_Docker_FEX_Experiment.md)
@@ -78,7 +87,7 @@ English README: [README.en.md](./README.en.md)
   - `scripts/run_dme_ddpjoc.sh`
   - `scripts/run_dme_ddp.sh`
   - `scripts/run_mp4muxer.sh`
-- 模式切换：`DME_MODE=box64|fex|host`（默认 `box64`）
+- 模式切换：`DME_MODE=box64|fex|fex-bundled|host`（默认 `box64`）
 - 可选 alias（本机）：
   ```bash
   alias dme-joc='./scripts/run_dme_ddpjoc.sh'
@@ -89,7 +98,14 @@ English README: [README.en.md](./README.en.md)
   ```bash
   DME_MODE=box64 dme-joc --help
   DME_MODE=fex mp4muxer --help
+  DME_MODE=fex-bundled dme-joc --help
   DME_MODE=host dme-ddp --help
+  ```
+- FEX Bundled 默认使用稳定别名；也可固定到 v6：
+  ```bash
+  DME_MODE=fex-bundled \
+  IMAGE_TAG_FEX_BUNDLED=ghcr.io/sakuzypeng/dee-fex-bundled:phase2-balanced-v6 \
+    dme-joc --help
   ```
 - `mp4muxer` 原生替换（便于后续自编译版本）：
   ```bash

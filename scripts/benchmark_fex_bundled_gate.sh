@@ -5,10 +5,12 @@ set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 
-IMAGE_TAG="${IMAGE_TAG:-dee-fex-bundled:phase2-balanced-v5}"
+IMAGE_TAG="${IMAGE_TAG:-dee-fex-bundled:phase2-balanced-v6}"
 RUNS="${RUNS:-3}"
 STATE_DIR="${STATE_DIR:-$ROOT_DIR/tmp_fex_bundled_state_bench}"
 WINEPREFIX="${WINEPREFIX:-/state/WinePrefixes/bench_fex_bundled}"
+DME_HELP_GATE="${DME_HELP_GATE:-auto}"
+DME_DIR="${DME_DIR:-$ROOT_DIR/dme_encoder}"
 
 BASELINE_FILE="${BASELINE_FILE:-$ROOT_DIR/configs/fex_bundled_baseline.env}"
 if [[ -f "$BASELINE_FILE" ]]; then
@@ -36,7 +38,7 @@ Usage:
   scripts/benchmark_fex_bundled_gate.sh [options]
 
 Options:
-  --image TAG      bundled image tag (default: dee-fex-bundled:phase2-balanced-v5)
+  --image TAG      bundled image tag (default: dee-fex-bundled:phase2-balanced-v6)
   --runs N         encode runs (default: 3)
   --state-dir DIR  benchmark state directory
   -h, --help       show help
@@ -75,6 +77,11 @@ if ! [[ "$RUNS" =~ ^[1-9][0-9]*$ ]]; then
   exit 2
 fi
 
+if ! [[ "$DME_HELP_GATE" =~ ^(auto|0|1)$ ]]; then
+  echo "Invalid DME_HELP_GATE: $DME_HELP_GATE (expected auto, 0, or 1)" >&2
+  exit 2
+fi
+
 if [[ ! -x "$ROOT_DIR/scripts/run_dee_with_fex_bundled.sh" ]]; then
   echo "Missing runner: $ROOT_DIR/scripts/run_dee_with_fex_bundled.sh" >&2
   exit 1
@@ -82,6 +89,11 @@ fi
 
 if [[ ! -x "$ROOT_DIR/scripts/check_fex_bundled_cold_start.sh" ]]; then
   echo "Missing cold-start checker: $ROOT_DIR/scripts/check_fex_bundled_cold_start.sh" >&2
+  exit 1
+fi
+
+if [[ ! -x "$ROOT_DIR/scripts/check_fex_bundled_payload.sh" ]]; then
+  echo "Missing payload checker: $ROOT_DIR/scripts/check_fex_bundled_payload.sh" >&2
   exit 1
 fi
 
@@ -270,7 +282,10 @@ run_case() {
     "$stdout_log" "$time_log" "$output_file" "$output_ok" "$progress_ok" "$critical_sig"
 }
 
-echo "[1/3] Function checks: help cold/warm"
+echo "[1/4] Runtime payload check"
+IMAGE_TAG="$IMAGE_TAG" "$ROOT_DIR/scripts/check_fex_bundled_payload.sh"
+
+echo "[2/4] Function checks: help cold/warm"
 run_case "1" "help_cold" \
   "cd '$ROOT_DIR' && IMAGE_TAG='$IMAGE_TAG' STATE_DIR='$STATE_DIR' WINEPREFIX='$WINEPREFIX' STRICT_FAIL_REGEX='$STRICT_FAIL_REGEX' '$ROOT_DIR/scripts/check_fex_bundled_cold_start.sh'" \
   ""
@@ -279,7 +294,18 @@ run_case "1" "help_warm" \
   "cd '$ROOT_DIR' && IMAGE_TAG='$IMAGE_TAG' STATE_DIR='$STATE_DIR' WINEPREFIX='$WINEPREFIX' '$ROOT_DIR/scripts/run_dee_with_fex_bundled.sh' --help" \
   ""
 
-echo "[2/3] Encode x$RUNS"
+if [[ -f "$DME_DIR/dee_ddpjoc_encoder.exe" && "$DME_HELP_GATE" != "0" ]]; then
+  run_case "1" "help_dme_ddpjoc" \
+    "cd '$ROOT_DIR' && DME_MODE='fex-bundled' DME_DIR='$DME_DIR' IMAGE_TAG_FEX_BUNDLED='$IMAGE_TAG' DME_FEX_BUNDLED_STATE_DIR='$STATE_DIR' DME_FEX_BUNDLED_WINEPREFIX='/state/WinePrefixes/bench_dme_fex_bundled' '$ROOT_DIR/scripts/run_dme_cli.sh' --tool dee_ddpjoc_encoder.exe --help" \
+    ""
+elif [[ "$DME_HELP_GATE" == "1" ]]; then
+  echo "DME help gate requested, but encoder is missing: $DME_DIR/dee_ddpjoc_encoder.exe" >&2
+  exit 1
+else
+  echo "DME help gate skipped (encoder not present or DME_HELP_GATE=0)."
+fi
+
+echo "[3/4] Encode x$RUNS"
 for run_idx in $(seq 1 "$RUNS"); do
   output_file="$ROOT_DIR/tmp_bench/fex_bundled/testADM_gate_run${run_idx}.ec3"
   log_file="y:/tmp_bench/fex_bundled/testADM_gate_run${run_idx}.log"
@@ -359,7 +385,7 @@ if [[ "$functional_fail_count" != "0" ]]; then
   func_gate="FAIL"
 fi
 
-echo "[3/3] Writing summary"
+echo "[4/4] Writing summary"
 {
   echo "# FEX Bundled Gate Summary"
   echo ""

@@ -186,13 +186,14 @@ Phase 1（`safe`）实测结果：
 
 ## 9. 当前默认与建议
 
-当前脚本默认已切到 `v5`：
+当前脚本默认已切到 `v6`：
 
-- `scripts/build_fex_bundled.sh`：默认 `BUNDLED_TRIM_LEVEL=balanced`，默认 `IMAGE_TAG=dee-fex-bundled:phase2-balanced-v5`
-- `scripts/run_dee_with_fex_bundled.sh`：默认镜像 `dee-fex-bundled:phase2-balanced-v5`
-- `scripts/benchmark_fex_bundled_gate.sh`：默认镜像 `dee-fex-bundled:phase2-balanced-v5`
-- `scripts/check_fex_bundled_cold_start.sh`：默认镜像 `dee-fex-bundled:phase2-balanced-v5`
-- 稳定别名：`dee-fex-bundled:phase2-balanced -> phase2-balanced-v5`
+- `scripts/build_fex_bundled.sh`：默认 `BUNDLED_TRIM_LEVEL=balanced`，默认 `IMAGE_TAG=dee-fex-bundled:phase2-balanced-v6`
+- `scripts/run_dee_with_fex_bundled.sh`：默认镜像 `dee-fex-bundled:phase2-balanced-v6`
+- `scripts/benchmark_fex_bundled_gate.sh`：默认镜像 `dee-fex-bundled:phase2-balanced-v6`
+- `scripts/check_fex_bundled_cold_start.sh`：默认镜像 `dee-fex-bundled:phase2-balanced-v6`
+- `scripts/check_fex_bundled_payload.sh`：检查诊断工具集、FEX/Wine 与 `avrt.dll`
+- 稳定别名：`dee-fex-bundled:phase2-balanced -> phase2-balanced-v6`
 
 建议流程：
 
@@ -237,3 +238,40 @@ Phase 1（`safe`）实测结果：
    - 新增可控开关：  
      - `AUTO_RESET_PREFIX_ON_IMAGE_CHANGE=1`（默认开启）  
      - `RESET_WINEPREFIX=1`（强制单次重建）
+
+## 12. v6 发布记录（2026-08-02）
+
+1. DME 兼容性根因与修复
+   - v5 的 `balanced` allowlist 只覆盖了既有 DEE 门禁，误删 Wine
+     `x86_64-windows/avrt.dll`。
+   - `dee_ddpjoc_encoder.exe` 会加载该模块，因此 DME 在进入编码前失败；这不是
+     DME 编码核心或 mode-21 补丁本身的问题。
+   - v6 在生成 allowlist、静态 keep 集和 Dockerfile 防线中同时保留
+     `avrt.dll`，并把 DME `--help` 纳入可选发布门禁。
+
+2. 诊断工具与运行入口
+   - 镜像新增 `mediainfo`、`file/binutils`、`xxd`、`jq`、`ripgrep`、
+     `python3-minimal`、`strace/lsof`、`curl`、`patchelf` 和常用解压工具。
+   - 未加入完整 FFmpeg、GDB、编译器和 `pip`。
+   - `run_dme_cli.sh` 新增 `DME_MODE=fex-bundled`，复用内嵌 RootFS 镜像。
+   - 新增 `check_fex_bundled_payload.sh`；常规 gate 会先检查工具与
+     `avrt.dll`，本机存在 DME CLI 时再自动执行 DME 冷启动帮助测试。
+
+3. 真实验收
+   - DEE gate：严格冷启动、热启动、ADM -> Atmos DDP EC-3、ADM -> AC-4
+     direct MP4 全部通过；功能与性能门禁均为 `PASS`。
+   - 最终发布 gate 的 DEE 单轮 EC-3 实测 `19.170s`，低于 `19.373s` 阈值；direct MP4 输出
+     非空且 `ffprobe` 验证为 AC-4。
+   - DME mode-21 实测：5.024 秒、1664 kb/s、`Blu-ray Disc / Dep JOC`、
+     `L R C LFE Ls Rs Lb Rb`；镜像内 MediaInfo 解析成功，FFmpeg 全段解码
+     无错误。
+   - DME 输出 SHA-256：
+     `b824081d0c4c5f562a286a3671d3cef0fe777ed17b2e2bd24f5d732ed200e8f7`。
+
+4. 发布与体积
+   - 发布标签：`ghcr.io/sakuzypeng/dee-fex-bundled:phase2-balanced-v6`
+   - 稳定别名：`ghcr.io/sakuzypeng/dee-fex-bundled:phase2-balanced`
+   - 远端 digest：
+     `sha256:676eff3b43abd005d368932ce4a01623b2d1c14480a84638628c387f9203bd99`
+   - 本地镜像体积：`441MB`（v5：`356MB`）
+   - GHCR manifest 压缩体积：`142.56 MiB`（v5：`116.67 MiB`）

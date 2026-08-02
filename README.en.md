@@ -15,11 +15,11 @@ Note: the `FEX` container track is used to reduce dependency on `Rosetta 2` and 
 > GitHub Packages renders the repository README; use the image-specific entry points below.
 > Compatibility note (global): validated with a Dolby Media Encoder (GUI) built-in CLI subset (`dee_ddpjoc_encoder.exe`, `dee_ddp_encoder.exe`, `dee_convert_sample_rate.exe`, `mp4muxer.exe`, `mp4demuxer.exe`) across Box64/FEX/Rosetta2 containers and non-container `wine64`; this is not a claim that all Dolby Media Encoder tools are fully verified.
 
-### Route Size Matrix (2026-03-19)
+### Route Size Matrix (2026-08-02)
 
 | Track | Recommended image | Platform | Local image size (`docker images`) | Compressed size (GHCR manifest) |
 | --- | --- | --- | --- | --- |
-| FEX Bundled (Embedded RootFS) | `ghcr.io/sakuzypeng/dee-fex-bundled:phase2-balanced-v5` | `linux/arm64` | `356MB` | `116.7 MiB` |
+| FEX Bundled (Embedded RootFS) | `ghcr.io/sakuzypeng/dee-fex-bundled:phase2-balanced-v6` | `linux/arm64` | `441MB` | `142.6 MiB` |
 | Box64 | `ghcr.io/sakuzypeng/dee-box64-lab:latest` | `linux/arm64` | `773MB` | `226.3 MiB` |
 | Rosetta 2 (legacy) | `ghcr.io/sakuzypeng/dee-wine-minimal:legacy-rosetta2-latest` | `linux/amd64` | `442MB` | `116.1 MiB` |
 
@@ -30,15 +30,24 @@ Note: the `FEX` container track is used to reduce dependency on `Rosetta 2` and 
 ### 1) FEX Bundled (embedded RootFS, primary recommendation)
 
 - Images:
-  - `ghcr.io/sakuzypeng/dee-fex-bundled:phase2-balanced-v5`
-  - `ghcr.io/sakuzypeng/dee-fex-bundled:phase2-balanced` (stable alias, currently points to `v5`)
+  - `ghcr.io/sakuzypeng/dee-fex-bundled:phase2-balanced-v6`
+  - `ghcr.io/sakuzypeng/dee-fex-bundled:phase2-balanced` (stable alias, currently points to `v6`)
 - Pull:
   ```bash
-  docker pull ghcr.io/sakuzypeng/dee-fex-bundled:phase2-balanced-v5
+  docker pull ghcr.io/sakuzypeng/dee-fex-bundled:phase2-balanced-v6
   ```
 - Quick smoke test:
   ```bash
-  IMAGE_TAG=ghcr.io/sakuzypeng/dee-fex-bundled:phase2-balanced-v5 ./scripts/run_dee_with_fex_bundled.sh --help
+  IMAGE_TAG=ghcr.io/sakuzypeng/dee-fex-bundled:phase2-balanced-v6 ./scripts/run_dee_with_fex_bundled.sh --help
+  ```
+- v6 restores Wine's `avrt.dll` for DME and includes a compact diagnostics
+  toolbox: `mediainfo`, `file`, `binutils`, `xxd`, `jq`, `ripgrep`,
+  `python3-minimal`, `strace`, `lsof`, `curl`, `patchelf`, and common archive
+  tools. Full FFmpeg, GDB, compilers, and `pip` are intentionally excluded.
+- Runtime payload check:
+  ```bash
+  IMAGE_TAG=ghcr.io/sakuzypeng/dee-fex-bundled:phase2-balanced-v6 \
+    ./scripts/check_fex_bundled_payload.sh
   ```
 - Diagnosis and regression notes: [DEE_FEX_Bundled_Diagnosis.md](./DEE_FEX_Bundled_Diagnosis.md)
 - Historical experiment record (external RootFS): [DEE_Docker_FEX_Experiment.en.md](./DEE_Docker_FEX_Experiment.en.md)
@@ -80,7 +89,7 @@ Note: the `FEX` container track is used to reduce dependency on `Rosetta 2` and 
   - `scripts/run_dme_ddpjoc.sh`
   - `scripts/run_dme_ddp.sh`
   - `scripts/run_mp4muxer.sh`
-- Mode switch: `DME_MODE=box64|fex|host` (default: `box64`)
+- Mode switch: `DME_MODE=box64|fex|fex-bundled|host` (default: `box64`)
 - Optional local aliases:
   ```bash
   alias dme-joc='./scripts/run_dme_ddpjoc.sh'
@@ -91,7 +100,15 @@ Note: the `FEX` container track is used to reduce dependency on `Rosetta 2` and 
   ```bash
   DME_MODE=box64 dme-joc --help
   DME_MODE=fex mp4muxer --help
+  DME_MODE=fex-bundled dme-joc --help
   DME_MODE=host dme-ddp --help
+  ```
+- FEX Bundled uses the stable alias by default; pin v6 when reproducibility is
+  preferred:
+  ```bash
+  DME_MODE=fex-bundled \
+  IMAGE_TAG_FEX_BUNDLED=ghcr.io/sakuzypeng/dee-fex-bundled:phase2-balanced-v6 \
+    dme-joc --help
   ```
 - Native `mp4muxer` override (for future self-compiled builds):
   ```bash

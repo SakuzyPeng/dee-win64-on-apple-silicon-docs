@@ -124,6 +124,7 @@ RUN set -eux; \
           printf '%s\n' \
             /usr/lib/x86_64-linux-gnu/wine/x86_64-windows/ntdll.dll \
             /usr/lib/x86_64-linux-gnu/wine/x86_64-windows/apisetschema.dll \
+            /usr/lib/x86_64-linux-gnu/wine/x86_64-windows/avrt.dll \
             /usr/lib/x86_64-linux-gnu/wine/x86_64-windows/kernelbase.dll \
             /usr/lib/x86_64-linux-gnu/wine/x86_64-windows/kernel32.dll \
             /usr/lib/x86_64-linux-gnu/wine/x86_64-windows/user32.dll \
@@ -206,6 +207,26 @@ LABEL org.opencontainers.image.source="https://github.com/SakuzyPeng/dee-win64-o
 
 ENV DEBIAN_FRONTEND=noninteractive
 
+# 常用诊断与解析工具。刻意不安装编译器、GDB 或完整 FFmpeg，控制运行镜像体积。
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
+      binutils \
+      ca-certificates \
+      curl \
+      file \
+      jq \
+      lsof \
+      mediainfo \
+      patchelf \
+      python3-minimal \
+      ripgrep \
+      strace \
+      unzip \
+      xxd \
+      xz-utils \
+      zstd && \
+    rm -rf /var/lib/apt/lists/*
+
 ARG ROOTFS_PATH=/root/.fex-emu/RootFS/Ubuntu_24_04
 
 # 最小 FEX 运行载荷（避免 host 层完整 apt 依赖树膨胀）
@@ -240,8 +261,23 @@ RUN printf '{"Config":{"RootFS":"Ubuntu_24_04"}}\n' > /root/.fex-emu/Config.json
 
 # 构建时验证：FEX + wine64 可执行
 RUN test -f ${ROOTFS_PATH}/usr/lib/wine/wine64
+RUN test -f ${ROOTFS_PATH}/usr/lib/x86_64-linux-gnu/wine/x86_64-windows/avrt.dll
 RUN command -v FEX
 RUN FEX /usr/lib/wine/wine64 --version
+RUN command -v file && \
+    command -v objdump && \
+    command -v jq && \
+    command -v lsof && \
+    command -v mediainfo && \
+    command -v patchelf && \
+    command -v python3 && \
+    command -v rg && \
+    command -v strace && \
+    command -v unzip && \
+    command -v xxd && \
+    command -v xz && \
+    command -v zstd && \
+    mediainfo --Version >/dev/null
 
 # HOST 层 wine 二进制：使 FEX 的 exec() 拦截能在 HOST 文件系统找到 wine 子进程
 COPY --from=rootfs_payload_builder /usr/lib/wine/wine64                  /usr/lib/wine/wine64

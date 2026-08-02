@@ -10,8 +10,10 @@ set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 
-IMAGE_TAG="${IMAGE_TAG:-dee-fex-bundled:phase2-balanced-v5}"
+IMAGE_TAG="${IMAGE_TAG:-dee-fex-bundled:phase2-balanced-v6}"
 DEE_DIR="${DEE_DIR:-$ROOT_DIR/dolby_encoding_engine}"
+DEE_HOST_EXE="${DEE_HOST_EXE:-$DEE_DIR/dee.exe}"
+WORKSPACE_TOOL_SUBDIR="${WORKSPACE_TOOL_SUBDIR:-dolby_encoding_engine}"
 STATE_DIR="${STATE_DIR:-$ROOT_DIR/tmp_fex_bundled_state}"
 WINEPREFIX="${WINEPREFIX:-/state/WinePrefixes/dee}"
 WINEBOOT_TIMEOUT="${WINEBOOT_TIMEOUT:-120}"
@@ -79,12 +81,17 @@ resolve_image_identity() {
 }
 
 if [[ ! -d "$DEE_DIR" ]]; then
-  echo "DEE directory not found: $DEE_DIR" >&2
+  echo "Windows tool directory not found: $DEE_DIR" >&2
   exit 1
 fi
 
-if [[ ! -f "$DEE_DIR/dee.exe" ]]; then
-  echo "dee.exe not found: $DEE_DIR/dee.exe" >&2
+if [[ ! -f "$DEE_HOST_EXE" ]]; then
+  echo "Windows executable not found: $DEE_HOST_EXE" >&2
+  exit 1
+fi
+
+if [[ ! "$WORKSPACE_TOOL_SUBDIR" =~ ^[A-Za-z0-9._-]+$ ]]; then
+  echo "Invalid WORKSPACE_TOOL_SUBDIR: $WORKSPACE_TOOL_SUBDIR" >&2
   exit 1
 fi
 
@@ -137,7 +144,7 @@ echo "Running DEE under FEX bundled image: $IMAGE_TAG"
 docker run --rm --platform linux/arm64 \
   -v "$STATE_DIR:/state" \
   -v "$ROOT_DIR:/workspace" \
-  -v "$DEE_DIR:/workspace/dolby_encoding_engine:ro" \
+  -v "$DEE_DIR:/workspace/$WORKSPACE_TOOL_SUBDIR:ro" \
   "$IMAGE_TAG" bash -lc "
     set -euo pipefail
 
